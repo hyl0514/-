@@ -1,0 +1,277 @@
+<template>
+  <div class="login-page">
+    <!-- 背景层 -->
+    <div class="lp-bg">
+      <div class="lp-blob b1"></div>
+      <div class="lp-blob b2"></div>
+      <div class="lp-blob b3"></div>
+    </div>
+
+    <!-- 登录卡 -->
+    <div class="lp-card">
+      <div class="lp-logo">
+        <div class="lp-logo-icon">✈️</div>
+        <div>
+          <div class="lp-logo-title">智能旅游规划与预算管理系统</div>
+          <div class="lp-logo-sub">设计与实现 · 毕业设计演示版</div>
+        </div>
+      </div>
+
+      <div class="lp-form">
+        <div class="lp-field">
+          <label class="lp-label">用户名</label>
+          <input class="lp-input" v-model="form.username" placeholder="admin 或 traveler" @keyup.enter="onLogin">
+        </div>
+        <div class="lp-field">
+          <label class="lp-label">密码</label>
+          <input class="lp-input" type="password" v-model="form.password" placeholder="请输入密码" @keyup.enter="onLogin">
+        </div>
+
+        <div class="lp-error" v-if="error">{{ error }}</div>
+
+        <button class="lp-submit" :disabled="loading" @click="onLogin">
+          {{ loading ? '登录中...' : '登 录' }}
+        </button>
+
+        <!-- 快捷登录 -->
+        <div class="lp-quick">
+          <div class="lp-quick-title">快捷登录（演示用）</div>
+          <div class="lp-quick-btns">
+            <button class="lp-quick-btn admin" @click="quickLogin('admin', 'admin123')">
+              🛡️ 管理员
+              <span class="lp-quick-acc">admin / admin123</span>
+            </button>
+            <button class="lp-quick-btn user" @click="quickLogin('traveler', 'travel123')">
+              ✈️ 普通用户
+              <span class="lp-quick-acc">traveler / travel123</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="lp-foot">© 2026 智能旅游规划与预算管理系统 · 本科毕业设计</div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { reactive, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../store/authStore'
+
+const router = useRouter()
+const route = useRoute()
+const auth = useAuthStore()
+
+const form = reactive({ username: '', password: '' })
+const loading = ref(false)
+const error = ref('')
+
+const onLogin = async () => {
+    error.value = ''
+    if (!form.username.trim() || !form.password.trim()) {
+        error.value = '请输入用户名和密码'
+        return
+    }
+    loading.value = true
+    await new Promise(r => setTimeout(r, 400))
+    const res = auth.login(form.username, form.password)
+    loading.value = false
+    if (res.ok) {
+        const redirect = route.query.redirect || '/'
+        router.push(redirect)
+    } else {
+        error.value = res.msg
+    }
+}
+
+const quickLogin = (u, p) => {
+    form.username = u
+    form.password = p
+    onLogin()
+}
+</script>
+
+<style scoped>
+.login-page {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e8f0ff 0%, #f0f7ff 50%, #e8fbfa 100%);
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.lp-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.lp-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+}
+.lp-blob.b1 { width: 420px; height: 420px; top: -120px; right: -80px; background: radial-gradient(circle, #2374DD, transparent 70%); }
+.lp-blob.b2 { width: 320px; height: 320px; bottom: -80px; left: -60px; background: radial-gradient(circle, #0EA5A4, transparent 70%); opacity: 0.25; }
+.lp-blob.b3 { width: 240px; height: 240px; top: 30%; left: 45%; background: radial-gradient(circle, #E8912F, transparent 70%); opacity: 0.15; }
+
+.lp-card {
+    position: relative;
+    width: 420px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(35, 116, 221, 0.18);
+    padding: 36px 34px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.lp-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+}
+
+.lp-logo-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2374DD, #0EA5A4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 8px 20px rgba(35, 116, 221, 0.35);
+}
+
+.lp-logo-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a2a4a;
+}
+
+.lp-logo-sub {
+    font-size: 12px;
+    color: #6b7c9a;
+    margin-top: 3px;
+}
+
+.lp-form { display: flex; flex-direction: column; gap: 14px; }
+
+.lp-field { display: flex; flex-direction: column; gap: 6px; }
+
+.lp-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1a2a4a;
+}
+
+.lp-input {
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid #e2e7ef;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 13.5px;
+    color: #1a2a4a;
+    outline: none;
+    transition: all 0.15s;
+}
+
+.lp-input:focus {
+    border-color: #2374DD;
+    box-shadow: 0 0 0 3px rgba(35, 116, 221, 0.12);
+}
+
+.lp-error {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #fde7ea;
+    color: #e94560;
+    font-size: 12.5px;
+}
+
+.lp-submit {
+    height: 44px;
+    border: none;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #2374DD, #0EA5A4);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    box-shadow: 0 8px 20px rgba(35, 116, 221, 0.35);
+    transition: all 0.18s;
+    letter-spacing: 2px;
+}
+
+.lp-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(35, 116, 221, 0.45);
+}
+
+.lp-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.lp-quick {
+    margin-top: 8px;
+    padding-top: 18px;
+    border-top: 1px dashed #e2e7ef;
+}
+
+.lp-quick-title {
+    font-size: 12px;
+    color: #6b7c9a;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.lp-quick-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.lp-quick-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    border: 1px solid #e2e7ef;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2a4a;
+    transition: all 0.15s;
+}
+
+.lp-quick-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.lp-quick-btn.admin:hover { border-color: #E8912F; background: #fff8ec; color: #E8912F; }
+.lp-quick-btn.user:hover { border-color: #2374DD; background: #e8f0ff; color: #2374DD; }
+
+.lp-quick-acc {
+    font-size: 10.5px;
+    color: #9ba8bd;
+    font-weight: 400;
+}
+
+.lp-foot {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 11.5px;
+    color: #9ba8bd;
+}
+</style>

@@ -1,0 +1,9 @@
+package org.example.traveljavaserver.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+import org.example.traveljavaserver.entity.PackCategory;
+
+@Mapper
+public interface PackCategoryMapper extends BaseMapper<PackCategory> {
+}

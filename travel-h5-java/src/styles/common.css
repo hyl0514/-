@@ -1,0 +1,431 @@
+/* ============================================================
+   PC 端设计规范 · 简约旅行风
+   主色 #2374DD 商务蓝 ｜ 白色卡片 ｜ 浅灰分割线
+   ============================================================ */
+:root {
+  /* 品牌色 */
+  --brand: #2374DD;
+  --brand-hover: #1B66CC;
+  --brand-active: #1558B0;
+  --brand-light: #EAF2FD;
+  --brand-lighter: #F4F8FE;
+
+  /* 文字色 */
+  --text-1: #1F2733;
+  --text-2: #5B6675;
+  --text-3: #98A2B1;
+
+  /* 背景 / 边框 */
+  --page-bg: #F5F7FA;
+  --border: #E8EBF0;
+  --divider: #EFF1F5;
+
+  /* 功能色 */
+  --danger: #E5484D;
+  --danger-bg: #FDECEC;
+  --success: #2FA96B;
+  --success-bg: #E9F7F0;
+  --warning: #E8912F;
+  --warning-bg: #FDF3E4;
+
+  /* POI 分类色 */
+  --cat-hotel: #2374DD;
+  --cat-view: #E8912F;
+  --cat-food: #E5484D;
+  --cat-fun: #8B5CF6;
+
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(31, 39, 51, 0.05), 0 4px 16px rgba(31, 39, 51, 0.04);
+  --shadow-hover: 0 4px 12px rgba(35, 116, 221, 0.12), 0 10px 30px rgba(31, 39, 51, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: var(--text-1);
+  background: var(--page-bg);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100vh;
+}
+
+h1, h2, h3, h4, p {
+  margin: 0;
+}
+
+/* ---------------- 卡片 ---------------- */
+.pc-card {
+  background: #fff;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* ---------------- 按钮 ---------------- */
+.pc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.pc-btn:hover {
+  color: var(--brand);
+  border-color: #b9d2f2;
+  background: var(--brand-lighter);
+}
+
+.pc-btn:active {
+  transform: translateY(1px);
+}
+
+.pc-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pc-btn:disabled:hover {
+  color: var(--text-2);
+  border-color: var(--border);
+  background: #fff;
+}
+
+.pc-btn-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.pc-btn-primary:hover {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+  color: #fff;
+}
+
+.pc-btn-danger {
+  color: var(--danger);
+  border-color: #f3c4c6;
+}
+
+.pc-btn-danger:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.pc-btn-sm {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 7px;
+}
+
+.pc-btn-lg {
+  height: 44px;
+  padding: 0 22px;
+  font-size: 15px
+}
+
+.pc-btn-block {
+  width: 100%;
+}
+
+/* ---------------- 表单 ---------------- */
+.pc-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 7px;
+  font-weight: 500;
+}
+
+.pc-input,
+.pc-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--text-1);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  font-family: inherit;
+}
+
+textarea.pc-input {
+  height: auto;
+  padding: 10px 12px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.pc-input:focus,
+.pc-select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(35, 116, 221, 0.12);
+}
+
+.pc-input::placeholder {
+  color: var(--text-3);
+}
+
+.pc-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%2398A2B1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+/* ---------------- 标签 ---------------- */
+.pc-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  font-size: 12px;
+  border-radius: 6px;
+  background: var(--brand-light);
+  color: var(--brand);
+  font-weight: 500;
+}
+
+.pc-tag-gray {
+  background: #f2f4f7;
+  color: var(--text-2);
+}
+
+.pc-tag-orange {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.pc-tag-red {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.pc-tag-green {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.pc-tag-purple {
+  background: #f0ebfe;
+  color: #8b5cf6;
+}
+
+/* ---------------- 自定义复选框 ---------------- */
+.pc-check {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #c8cfd9;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  background: #fff;
+}
+
+.pc-check.checked {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.pc-check svg {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.pc-check.checked svg {
+  opacity: 1;
+}
+
+/* ---------------- 弹窗 ---------------- */
+.pc-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 39, 51, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: maskIn 0.2s ease;
+}
+
+.pc-modal {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(31, 39, 51, 0.25);
+  animation: modalIn 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  max-height: 86vh;
+}
+
+.pc-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+.pc-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.pc-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-3);
+  transition: all 0.15s ease;
+}
+
+.pc-modal-close:hover {
+  background: #f2f4f7;
+  color: var(--text-1);
+}
+
+.pc-modal-body {
+  padding: 22px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.pc-modal-footer {
+  padding: 14px 22px 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ---------------- Toast ---------------- */
+.pc-toast-wrap {
+  position: fixed;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.pc-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: rgba(31, 39, 51, 0.92);
+  color: #fff;
+  font-size: 13.5px;
+  border-radius: 9px;
+  box-shadow: 0 8px 24px rgba(31, 39, 51, 0.25);
+  animation: toastIn 0.25s ease;
+}
+
+.pc-toast.success {
+  background: rgba(47, 169, 107, 0.95);
+}
+
+.pc-toast.error {
+  background: rgba(229, 72, 77, 0.95);
+}
+
+.pc-toast.hide {
+  animation: toastOut 0.3s ease forwards;
+}
+
+/* ---------------- 滚动条 ---------------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d3d9e1;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b7bfca;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------------- 动画 ---------------- */
+@keyframes maskIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+.fade-enter {
+  animation: viewIn 0.35s ease;
+}
+
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
