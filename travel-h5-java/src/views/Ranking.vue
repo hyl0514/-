@@ -251,7 +251,7 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { getCityBoard } from '../utils/rankData'
+import { getCityBoard, fetchRealSeeds } from '../utils/rankData'
 import { useTripStore } from '../store/tripStore'
 import { useFavoriteStore } from '../store/favoriteStore'
 import toast from '../utils/msg'
@@ -268,22 +268,27 @@ const cities = [
 // 默认城市：优先取行程目的地，无则用南昌，保证页面一进来就有榜单内容
 const city = ref(tripState.form.destination || '南昌')
 const loaded = ref(false)
+const loading = ref(false)
 const boards = reactive([
     { key: 'hotel', label: '酒店', icon: '🏨', view: 'red', red: [], black: [] },
     { key: 'food', label: '美食', icon: '🍜', view: 'red', red: [], black: [] },
     { key: 'spot', label: '景点', icon: '⛰️', view: 'red', red: [], black: [] }
 ])
 
-const loadBoard = () => {
+const loadBoard = async () => {
     const c = city.value.trim()
     if (!c) { toast.error('请输入城市名'); return }
+    loading.value = true
+    // 先尝试数据库（真实场所 + 真实照片），失败/无数据则走本地种子
+    const fromDb = await fetchRealSeeds(c)
     const data = getCityBoard(c)
     boards.forEach(b => {
         b.red = data[b.key].red
         b.black = data[b.key].black
     })
     loaded.value = true
-    toast.success(`已生成 ${c} 酒店 / 美食 / 景点 红黑榜`)
+    loading.value = false
+    toast.success(fromDb ? `已从数据库加载 ${c} 真实榜单（含实景图）` : `已生成 ${c} 酒店 / 美食 / 景点 红黑榜`)
 }
 
 const catLabel = (key) => boards.find(b => b.key === key)?.label || key

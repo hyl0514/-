@@ -27,9 +27,12 @@ function mulberry32(seed) {
 
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)]
 
-// 生成条目真实配图：loremflickr 按英文关键词即时返回真实照片，lock 值绑定场所名保证图片稳定
-const genImg = (name, keywords, idx = 0) =>
-    `https://loremflickr.com/640/480/${keywords}?lock=${hashString(name) % 500 + idx * 7}`
+// 生成条目配图：trae 文生图按关键词定制生成真实感照片，同场所不同机位用 idx 区分
+const genImg = (name, keywords, idx = 0) => {
+    const kw = (keywords || 'travel,scenic').split(',').map(s => s.trim()).filter(Boolean).join(' ')
+    const prompt = encodeURIComponent(`${kw}, professional travel photography, high quality, view ${idx + 1}`)
+    return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${prompt}&image_size=landscape_4_3`
+}
 
 // ---------------- 名称池 ----------------
 
@@ -294,13 +297,42 @@ export function getCityBoard(city) {
     return board
 }
 
+// ---------------- 数据库真实种子（MySQL rank_items 表，经后端 /api/ranks 下发） ----------------
+import { get } from './request'
+
+// 城市 → 后端种子缓存；buildList 优先级：BACKEND_SEEDS > REAL_PLACE_SEEDS > 通用池
+const BACKEND_SEEDS = {}
+
+/**
+ * 从后端拉取指定城市的真实榜单种子（含真实照片 URL）
+ * @returns {Promise<boolean>} true=数据库有该城市数据
+ */
+export async function fetchRealSeeds(city) {
+    const c = (city || '').trim()
+    if (!c) return false
+    if (BACKEND_SEEDS[c]) return true
+    try {
+        const data = await get('/ranks', { city: c })
+        if (data && data.hotel) {
+            // 后端 seed → 本地种子结构（buildList 兼容字段：name/rating/priceText/tags/kw/loc/imgKw/img）
+            BACKEND_SEEDS[c] = data
+            return true
+        }
+        return false
+    } catch {
+        return false // 后端不可用，静默走本地种子
+    }
+}
+
 function buildList(city, catKey, color, meta) {
     const pool = color === 'red' ? GOOD_POOL[catKey] : BAD_POOL[catKey]
     const tagPool = color === 'red' ? meta.goodTags : meta.badTags
     const kwPool = color === 'red' ? meta.goodKeywords : meta.badKeywords
     const commentTpl = color === 'red' ? GOOD_COMMENTS[catKey] : BAD_COMMENTS[catKey]
     const summaryTpl = color === 'red' ? SUMMARY_GOOD[catKey] : SUMMARY_BAD[catKey]
-    const seeds = REAL_PLACE_SEEDS[city]?.[catKey]?.[color]
+    // 种子优先级：数据库（rank_items 表）> 本地真实场所种子 > 通用名称池
+    const backendCat = BACKEND_SEEDS[city]?.[catKey]
+    const seeds = backendCat?.[color] ?? REAL_PLACE_SEEDS[city]?.[catKey]?.[color]
     const useReal = Array.isArray(seeds) && seeds.length > 0
     const count = useReal ? seeds.length : (color === 'red' ? RED_COUNT : BLACK_COUNT)
     const baseTop = color === 'red' ? 4.9 : 3.8
@@ -393,7 +425,7 @@ function buildList(city, catKey, color, meta) {
             rank: list.length + 1,
             name,
             rating: Number(rating.toFixed(1)),
-            priceText: meta.priceText(rng),
+            priceText: seedItem?.priceText || meta.priceText(rng),
             tags,
             location: loc,
             summary,
@@ -403,7 +435,7 @@ function buildList(city, catKey, color, meta) {
             keywords,
             aiConclusion,
             comments,
-            img: genImg(name, imgKw || meta.scene),
+            img: seedItem?.img || genImg(name, imgKw || meta.scene),
             gallery: GALLERY_SCENES[catKey].map(([label, scene], gi) => genImg(`${name} ${label}`, scene, gi + 1)),
             address: useReal ? loc : `${city}${loc}${pick(rng, ADDRESS_TAIL)}`,
             openTime: pick(rng, OPEN_TIME[catKey]),

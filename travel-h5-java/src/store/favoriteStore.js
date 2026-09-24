@@ -6,7 +6,7 @@ import { reactive, computed, watch } from 'vue'
  * 全部 localStorage 持久化，单文件组件直接调用 addXxx / removeXxx 即可
  */
 
-const STORAGE_KEY = 'pc-favorites-v5'
+const STORAGE_KEY = 'pc-favorites-v6'
 
 const defaultState = () => ({
     routes: [],   // { id, routeData(完整route对象), savedAt, name }
@@ -26,12 +26,17 @@ const now = () => new Date().toISOString().slice(0, 10)
 // 简单字符串哈希（用于图片 lock 稳定绑定）
 const hash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0 } return Math.abs(h) }
 
-// 动态收藏配图：loremflickr 按英文关键词即时返回真实照片（空格转逗号为多关键词）
-const genImg = (name, keywords = 'travel') =>
-    `https://loremflickr.com/400/400/${keywords.replace(/ /g, ',')}?lock=${hash(name) % 500}`
+// 动态收藏配图：trae 文生图按关键词生成（需 index.html 的 no-referrer 配合）
+const genImg = (name, keywords = 'travel') => {
+    const prompt = encodeURIComponent(`${keywords.replace(/,/g, ' ')}, professional travel photography, high quality`)
+    return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${prompt}&image_size=square`
+}
 
-// 种子数据配图：固定 lock 值保证图片稳定
-const lf = (keywords, lock) => `https://loremflickr.com/400/400/${keywords}?lock=${lock}`
+// 种子数据配图：keywords 逗号分隔 + lock 区分机位，同参必缓存保证稳定
+const lf = (keywords, lock) => {
+    const prompt = encodeURIComponent(`${keywords.replace(/,/g, ' ')}, professional travel photography, high quality, view ${lock}`)
+    return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${prompt}&image_size=square`
+}
 
 // -------- routes --------
 const addRoute = (route, displayName) => {

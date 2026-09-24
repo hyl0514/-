@@ -31,6 +31,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/auth/**",
+                        "/api/ranks/**",
                         "/error",
                         "/webjars/**",
                         "/favicon.ico"

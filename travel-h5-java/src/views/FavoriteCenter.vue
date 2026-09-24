@@ -240,6 +240,10 @@
             <span class="pc-modal-close" @click="detail.show = false">✕</span>
           </div>
           <div class="pc-modal-body detail-body">
+            <!-- 详情头图 -->
+            <div class="dm-cover" v-if="detail.data?.img || detail.data?.images?.[0]">
+              <img :src="detail.data.img || detail.data.images[0]" alt="" @error="$event.target.parentElement.style.display='none'">
+            </div>
             <!-- 路线详情 -->
             <template v-if="detail.type === 'route'">
               <div class="dm-section">
@@ -309,6 +313,34 @@
                     <span class="dm-pt-note">{{ p.remark }}</span>
                   </div>
                 </div>
+              </div>
+            </template>
+
+            <!-- 帖子详情 -->
+            <template v-else-if="detail.type === 'post'">
+              <div class="dm-post-head">
+                <span class="dp-avatar">{{ detail.data.avatar || '📝' }}</span>
+                <div class="dp-author">
+                  <div class="dp-name">{{ detail.data.author }}</div>
+                  <div class="dp-sub">{{ detail.data.city }} · {{ detail.data.cat }} · 收藏于 {{ detail.data.savedAt }}</div>
+                </div>
+                <div class="dp-stats">
+                  <span>👍 {{ detail.data.likes }}</span>
+                  <span>💬 {{ detail.data.comments }}</span>
+                </div>
+              </div>
+              <p class="dm-p dm-post-content">{{ detail.data.content }}</p>
+              <div class="dm-post-gallery" v-if="(detail.data.images || []).length">
+                <img
+                  v-for="(img, i) in detail.data.images"
+                  :key="i"
+                  :src="img"
+                  alt=""
+                  @error="$event.target.style.opacity='0.3'"
+                >
+              </div>
+              <div class="dm-tags" v-if="(detail.data.tags || []).length">
+                <span class="pc-tag pc-tag-gray" v-for="t in detail.data.tags" :key="t"># {{ t }}</span>
               </div>
             </template>
           </div>
@@ -549,6 +581,54 @@ const openPost = (p) => {
 .detail-body { max-height: calc(80vh - 70px); overflow-y: auto; padding: 18px 22px 22px; }
 
 .dm-section { margin-bottom: 18px; }
+
+/* 详情头图 */
+.dm-cover {
+    margin: -18px -22px 16px;
+    height: 220px;
+    overflow: hidden;
+    background: #f5f7fa;
+}
+.dm-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 帖子详情 */
+.dm-post-head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--divider);
+    margin-bottom: 14px;
+}
+.dp-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--brand-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.dp-name { font-size: 14px; font-weight: 700; color: var(--text-1); }
+.dp-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.dp-stats { margin-left: auto; display: flex; gap: 12px; font-size: 12.5px; color: var(--text-2); }
+.dm-post-content { font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+.dm-post-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.dm-post-gallery img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--divider);
+    background: #f5f7fa;
+}
 .dm-label {
     font-size: 13px;
     font-weight: 600;
