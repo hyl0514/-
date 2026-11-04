@@ -6,7 +6,7 @@ export const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 // 创建 axios 实例
 const request = axios.create({
     baseURL: API_BASE,
-    timeout: 15000,
+    timeout: 300000,  // 5 分钟，AI 大模型生成路线/预算/行李清单耗时较长
     headers: { 'Content-Type': 'application/json' }
 })
 
