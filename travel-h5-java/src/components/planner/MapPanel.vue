@@ -124,7 +124,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useTripStore } from '../../store/tripStore'
 import { useExpenseStore } from '../../store/expenseStore'
-import { geocode, drivingRoute, walkingRoute, getCurrentPosition, calculateDistance, reverseGeocode, isAmapEnabled, createMap } from '../../utils/amapApi'
+import { geocode, drivingRoute, walkingRoute, getCurrentPosition, getLocationByIP, calculateDistance, reverseGeocode, isAmapEnabled, createMap } from '../../utils/amapApi'
 import toast from '../../utils/msg'
 
 const { state, flatPoints, bumpOffRoute } = useTripStore()
@@ -200,21 +200,30 @@ const initMap = async () => {
 const tryGetCurrentLocation = async () => {
     if (!mapInstance) return
     try {
+        // 第一优先级：浏览器高精度定位（需要用户权限）
         const pos = await getCurrentPosition()
         currentPosition.value = pos
         mapInstance.setCenter([pos.lng, pos.lat])
         mapInstance.setZoom(13)
-        
-        // 添加位置标记
         addLocationMarker(pos.lng, pos.lat)
-        
-        // 逆地理编码获取地址
         const addr = await reverseGeocode(pos.lng, pos.lat)
         currentAddress.value = addr.formattedAddress
         locationStatus.value = '已定位'
     } catch (e) {
-        console.warn('获取位置失败:', e.message)
-        locationStatus.value = '定位失败'
+        console.warn('[定位] 浏览器定位失败，降级 IP 定位:', e.message)
+        try {
+            // 第二优先级：IP 定位（无需权限，定位到城市中心）
+            const ipPos = await getLocationByIP()
+            currentPosition.value = ipPos
+            mapInstance.setCenter([ipPos.lng, ipPos.lat])
+            mapInstance.setZoom(11)
+            addLocationMarker(ipPos.lng, ipPos.lat)
+            currentAddress.value = ipPos.address
+            locationStatus.value = 'IP 定位'
+        } catch (e2) {
+            console.warn('[定位] IP 定位也失败，保持默认视图:', e2.message)
+            locationStatus.value = '默认视图'
+        }
     }
 }
 
@@ -255,6 +264,7 @@ const renderRoute = async (points) => {
         for (const point of points) {
             try {
                 const geo = await geocode(point.name, state.form.destination)
+                if (!geo) continue // 静默跳过查不到的点位
                 coordinates.push({
                     ...point,
                     lng: geo.lng,
@@ -345,9 +355,17 @@ const startNavigation = async () => {
         return
     }
     
+    // 如果初始定位没拿到，快速尝试一次 IP 定位
     if (!currentPosition.value) {
-        toast.error('无法获取当前位置，请检查定位权限')
-        return
+        try {
+            const ipPos = await getLocationByIP()
+            currentPosition.value = ipPos
+            mapInstance.setCenter([ipPos.lng, ipPos.lat])
+            addLocationMarker(ipPos.lng, ipPos.lat)
+        } catch {
+            toast.error('定位不可用，无法开始导航')
+            return
+        }
     }
     
     isNavigating.value = true
@@ -377,7 +395,7 @@ const stopNavigation = () => {
 
 const startLocationWatch = () => {
     if (!navigator.geolocation) {
-        toast.error('浏览器不支持定位')
+        toast.info('当前浏览器不支持持续定位，已用当前位置继续')
         return
     }
     
@@ -439,6 +457,7 @@ const planRoute = async () => {
         for (const point of flatPoints.value) {
             try {
                 const geo = await geocode(point.name, state.form.destination)
+                if (!geo) continue
                 waypoints.push({ lng: geo.lng, lat: geo.lat })
             } catch (e) {
                 // 跳过失败的点位

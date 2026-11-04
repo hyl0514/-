@@ -32,3 +32,9 @@ llm:
   base-url: https://api.siliconflow.cn/v1
   model: deepseek-ai/DeepSeek-V3
   api-key: sk-vwsakodmjskwrsxyiitfugdpuuwbunbwrmhnfobnkmwgkvke
+
+# 高德 Web 服务 Key（用于后端 IP 定位、地理编码、逆地理编码；和前端 Web端 JS API Key 是不同类型，需单独申请）
+# 申请地址：https://console.amap.com/dev/key/app → 同一个应用下「添加 Key」→ 选「Web 服务」
+amap:
+  web-service-key: a89773cd7d28e175717b27d1a7d039e6
+  rest-base: https://restapi.amap.com/v3
