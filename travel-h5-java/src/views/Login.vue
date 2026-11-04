@@ -37,15 +37,16 @@
         <div class="lp-quick">
           <div class="lp-quick-title">快捷登录（演示用）</div>
           <div class="lp-quick-btns">
-            <button class="lp-quick-btn admin" @click="quickLogin('admin', 'admin123')">
+            <button class="lp-quick-btn admin" :disabled="loading" @click="quickLogin('admin', 'admin123')">
               🛡️ 管理员
               <span class="lp-quick-acc">admin / admin123</span>
             </button>
-            <button class="lp-quick-btn user" @click="quickLogin('traveler', 'travel123')">
+            <button class="lp-quick-btn user" :disabled="loading" @click="quickLogin('traveler', 'travel123')">
               ✈️ 普通用户
               <span class="lp-quick-acc">traveler / travel123</span>
             </button>
           </div>
+          <p class="lp-quick-tip">普通用户：发布动态需管理员审核 · 管理员：可审核内容</p>
         </div>
       </div>
 
@@ -58,6 +59,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../store/authStore'
+import toast from '../utils/msg'
 
 const router = useRouter()
 const route = useRoute()
@@ -68,24 +70,28 @@ const loading = ref(false)
 const error = ref('')
 
 const onLogin = async () => {
+    if (loading.value) return
     error.value = ''
-    if (!form.username.trim() || !form.password.trim()) {
+    form.username = form.username.trim()
+    if (!form.username || !form.password.trim()) {
         error.value = '请输入用户名和密码'
         return
     }
     loading.value = true
-    await new Promise(r => setTimeout(r, 400))
-    const res = auth.login(form.username, form.password)
+    // 注意：login 是异步方法，必须 await 才能拿到 { ok, msg }
+    const res = await auth.login(form.username, form.password)
     loading.value = false
     if (res.ok) {
+        toast.success(res.msg)
         const redirect = route.query.redirect || '/'
-        router.push(redirect)
+        router.replace(redirect)
     } else {
         error.value = res.msg
     }
 }
 
 const quickLogin = (u, p) => {
+    if (loading.value) return
     form.username = u
     form.password = p
     onLogin()
@@ -267,6 +273,15 @@ const quickLogin = (u, p) => {
     color: #9ba8bd;
     font-weight: 400;
 }
+
+.lp-quick-tip {
+    margin: 10px 0 0;
+    font-size: 11.5px;
+    color: #9ba8bd;
+    text-align: center;
+}
+
+.lp-quick-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .lp-foot {
     margin-top: 22px;

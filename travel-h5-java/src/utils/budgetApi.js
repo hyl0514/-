@@ -5,7 +5,7 @@ import { post } from './request'
  * @param {Object} data { destination, totalBudget, estimatedCost, actualCost, bills }
  */
 export function getSavingAdvice(data) {
-    return post('budget/advice', data)
+    return post('travel/budget/advice', data)
 }
 
 /**
@@ -13,5 +13,5 @@ export function getSavingAdvice(data) {
  * @param {Object} data { destination, totalBudget, estimatedCost, actualCost, bills }
  */
 export function getReviewReport(data) {
-    return post('budget/review', data)
+    return post('travel/budget/review', data)
 }

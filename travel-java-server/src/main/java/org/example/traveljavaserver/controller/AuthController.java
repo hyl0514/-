@@ -42,7 +42,8 @@ public class AuthController {
         if (!req.getPassword().equals(user.getPassword())) {
             return Result.fail(401, "密码错误");
         }
-        if ("disabled".equalsIgnoreCase(user.getStatus())) {
+        // users.status 为 TINYINT：1=正常，0=禁用
+        if (!"1".equals(user.getStatus())) {
             return Result.fail(403, "账号已被禁用");
         }
 

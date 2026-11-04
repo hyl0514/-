@@ -9,5 +9,5 @@ import { post } from './request'
  * @param {string} data.preference 出行偏好：休闲 / 美食 / 小众打卡
  */
 export function generateRoutes(data) {
-    return post('routes/generate', data)
+    return post('travel/routes/generate', data)
 }

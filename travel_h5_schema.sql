@@ -174,6 +174,8 @@ CREATE TABLE expense_plans (
   trip_id       BIGINT                 DEFAULT NULL,
   total_budget  DECIMAL(12,2) NOT NULL DEFAULT 0,
   title         VARCHAR(80)            DEFAULT NULL,
+  ai_result     JSON                     DEFAULT NULL COMMENT 'AI 生成的预算建议/复盘结果',
+  source        VARCHAR(16)             DEFAULT 'manual' COMMENT 'manual/ai',
   created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_user_id (user_id),
@@ -257,6 +259,43 @@ CREATE TABLE rank_items (
   PRIMARY KEY (id),
   KEY idx_rank_type (rank_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='榜单条目';
+
+-- -------------------- 9. AI 会话与场所缓存 --------------------
+DROP TABLE IF EXISTS chat_sessions;
+CREATE TABLE chat_sessions (
+  id          BIGINT       NOT NULL AUTO_INCREMENT,
+  user_id     BIGINT       NOT NULL,
+  session_key VARCHAR(64)  NOT NULL,
+  title       VARCHAR(120)          DEFAULT NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_user_session (user_id, session_key),
+  KEY idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 对话会话';
+
+DROP TABLE IF EXISTS chat_messages;
+CREATE TABLE chat_messages (
+  id          BIGINT       NOT NULL AUTO_INCREMENT,
+  session_id  BIGINT       NOT NULL,
+  role        VARCHAR(16)  NOT NULL COMMENT 'user / assistant',
+  content     TEXT         NOT NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_session (session_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 对话消息';
+
+DROP TABLE IF EXISTS poi_cache;
+CREATE TABLE poi_cache (
+  id            BIGINT       NOT NULL AUTO_INCREMENT,
+  user_id       BIGINT                DEFAULT NULL,
+  destination   VARCHAR(80)           DEFAULT NULL,
+  route_context VARCHAR(500)          DEFAULT NULL,
+  payload       JSON                  DEFAULT NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 沿途场所推荐缓存';
+
 
 -- ====================================================================
 -- 表关系速览：

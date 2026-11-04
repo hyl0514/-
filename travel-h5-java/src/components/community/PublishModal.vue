@@ -36,7 +36,7 @@
             <label class="pm-label">配图（可选，最多 6 张）</label>
             <div class="pm-imgs">
               <div v-for="(img, i) in form.images" :key="i" class="pm-img-item">
-                <img :src="img" alt="">
+                <img :src="img" alt="" @error="onImgError">
                 <span class="pm-img-del" @click="form.images.splice(i, 1)">✕</span>
               </div>
               <div v-if="form.images.length < 6" class="pm-img-add" @click="addImg">
@@ -125,7 +125,7 @@
 <script setup>
 import { reactive, computed, ref } from 'vue'
 import { useCommunityStore } from '../../store/communityStore'
-import toast from '../../utils/msg'
+import { imgMap } from '../../utils/imgMap'
 
 defineProps({ show: Boolean })
 const emit = defineEmits(['close', 'posted'])
@@ -157,9 +157,26 @@ const tagInput = ref('')
 
 const canSubmit = computed(() => form.title.trim() && form.content.trim())
 
+// 配图取真实景点/美食照片（未接入上传接口前的占位图源）
+const PIC_KEYS = [
+    '滕王阁', '北京故宫博物院', '杭州西湖风景名胜区', '亚龙湾',
+    '回民街', '陈麻婆豆腐（骡马市总店）', '鼓浪屿', '洱海',
+    '青岛栈桥', '丽江古城', '广州早茶', '西安秦始皇兵马俑'
+]
+
 const addImg = () => {
-    const kw = ['chinese,food', 'hotel,bedroom', 'scenic,view', 'hotpot', 'china,pagoda', 'travel,landscape']
-    form.images.push(`https://loremflickr.com/600/400/${kw[Math.floor(Math.random() * kw.length)]}?lock=${Date.now()}`)
+    const key = PIC_KEYS[form.images.length % PIC_KEYS.length]
+    if (form.images.length < 6) form.images.push(imgMap[key])
+}
+
+// 预览图加载失败时替换为占位图
+const onImgError = (e) => {
+    const t = e.target
+    if (t.dataset.fb) return
+    t.dataset.fb = '1'
+    t.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450"><rect width="600" height="450" fill="#e3ecf7"/><text x="300" y="238" font-size="34" fill="#8fa6c0" text-anchor="middle">✈️</text></svg>'
+    )
 }
 
 const addTag = () => {
@@ -183,9 +200,9 @@ const onSubmit = () => {
         tripName: form.linkTrip ? '我的行程' : '',
         hasSpot: form.linkFav,
         spotName: form.linkFav ? '我的收藏' : '',
-        status: form.perm === 'private' ? 'approved' : 'pending'
+        // 审核状态由 store 按用户角色决定（普通用户 pending / 管理员 approved）
+        perm: form.perm
     })
-    toast.success(form.perm === 'private' ? '已保存（仅自己可见）' : '🎉 发布成功，进入管理员审核')
     // 重置
     form.tab = 'photo'; form.title = ''; form.content = ''; form.images = []
     form.city = ''; form.tags = []; form.linkTrip = false; form.linkFav = false

@@ -27,5 +27,11 @@ public class ExpensePlan implements Serializable {
 
     private String title;
 
+    /** AI 生成的预算建议/复盘结果 JSON */
+    private String aiResult;
+
+    /** manual / ai */
+    private String source;
+
     private LocalDateTime createdAt;
 }

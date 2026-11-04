@@ -12,6 +12,11 @@ import java.util.List;
 public class PackingListVO {
 
     /**
+     * 落库后的行李包 id
+     */
+    private Long packId;
+
+    /**
      * 分类列表（证件类、衣物类、药品类、电子设备类、洗漱护肤类、随身杂物类等）
      */
     private List<Category> categoryList;

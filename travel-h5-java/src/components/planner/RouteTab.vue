@@ -154,7 +154,7 @@ const onGenerate = async () => {
             preference: local.preference
         })
         setRoutes(data.routeList)
-        toast.success(`已生成 ${data.routeList.length} 套路线，默认 A 方案为主行程`)
+        toast.success(`已生成 ${data.routeList.length} 套路线并自动保存到我的行程`)
     } catch (e) {
         console.error(e)
         toast.error('路线生成失败，请确认后端服务已启动')

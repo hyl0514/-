@@ -11,6 +11,11 @@ import java.util.List;
 public class PoiRecommendVO {
 
     /**
+     * 落库后的缓存记录 id
+     */
+    private Long cacheId;
+
+    /**
      * 推荐场所列表
      */
     private List<PoiItem> poiList;

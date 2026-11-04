@@ -21,6 +21,11 @@ public class MultiRouteVO {
     @Data
     public static class RouteOption {
         /**
+         * 落库后的行程 id
+         */
+        private Long tripId;
+
+        /**
          * 路线名称
          */
         private String routeName;

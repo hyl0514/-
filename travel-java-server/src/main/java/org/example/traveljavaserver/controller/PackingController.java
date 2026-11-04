@@ -2,9 +2,12 @@ package org.example.traveljavaserver.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.traveljavaserver.auth.CurrentUser;
+import org.example.traveljavaserver.auth.LoginUser;
 import org.example.traveljavaserver.dto.PackingCheckDTO;
 import org.example.traveljavaserver.dto.PackingRequestDTO;
 import org.example.traveljavaserver.service.PackingService;
+import org.example.traveljavaserver.service.TravelPersistenceService;
 import org.example.traveljavaserver.vo.PackingCheckVO;
 import org.example.traveljavaserver.vo.PackingListVO;
 import org.example.traveljavaserver.vo.Result;
@@ -22,12 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class PackingController {
 
     private final PackingService packingService;
+    private final TravelPersistenceService persistenceService;
 
     /**
-     * 根据行程信息生成结构化行李打包清单
+     * 根据行程信息生成结构化行李打包清单，并写入 packs / pack_categories / pack_items
      */
     @PostMapping("/generate")
-    public Result<PackingListVO> generate(@Valid @RequestBody PackingRequestDTO requestDTO) {
+    public Result<PackingListVO> generate(@CurrentUser LoginUser me,
+                                          @Valid @RequestBody PackingRequestDTO requestDTO) {
         try {
             PackingListVO packingListVO = packingService.generate(
                     requestDTO.getDestination(),
@@ -35,6 +40,7 @@ public class PackingController {
                     requestDTO.getWeatherInfo(),
                     requestDTO.getTripType()
             );
+            packingListVO.setPackId(persistenceService.savePackingList(me.userId(), requestDTO, packingListVO));
             return Result.ok(packingListVO);
         } catch (Exception e) {
             return Result.fail(500, "行李清单生成失败: " + e.getMessage());

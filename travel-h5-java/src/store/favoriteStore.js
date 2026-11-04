@@ -1,4 +1,5 @@
 import { reactive, computed, watch } from 'vue'
+import { imgMap } from '../utils/imgMap.js'
 
 /**
  * 个人收藏 Store
@@ -6,7 +7,7 @@ import { reactive, computed, watch } from 'vue'
  * 全部 localStorage 持久化，单文件组件直接调用 addXxx / removeXxx 即可
  */
 
-const STORAGE_KEY = 'pc-favorites-v6'
+const STORAGE_KEY = 'pc-favorites-v9'
 
 const defaultState = () => ({
     routes: [],   // { id, routeData(完整route对象), savedAt, name }
@@ -26,16 +27,26 @@ const now = () => new Date().toISOString().slice(0, 10)
 // 简单字符串哈希（用于图片 lock 稳定绑定）
 const hash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0 } return Math.abs(h) }
 
-// 动态收藏配图：trae 文生图按关键词生成（需 index.html 的 no-referrer 配合）
+// 动态收藏配图：优先用 imgMap 真实场所图，未命中回退 picsum.photos
+// index.html 已设 no-referrer meta，无需额外处理防盗链
+const seedFromStr = (s) => {
+    let h = 0
+    const str = String(s || 'travel')
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0
+    return Math.abs(h).toString(36)
+}
 const genImg = (name, keywords = 'travel') => {
-    const prompt = encodeURIComponent(`${keywords.replace(/,/g, ' ')}, professional travel photography, high quality`)
-    return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${prompt}&image_size=square`
+    if (name && imgMap[name]) return imgMap[name]
+    const seed = seedFromStr((name || '') + keywords)
+    return `https://picsum.photos/seed/${seed}/400/400`
 }
 
-// 种子数据配图：keywords 逗号分隔 + lock 区分机位，同参必缓存保证稳定
-const lf = (keywords, lock) => {
-    const prompt = encodeURIComponent(`${keywords.replace(/,/g, ' ')}, professional travel photography, high quality, view ${lock}`)
-    return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${prompt}&image_size=square`
+// 种子数据配图：先查 imgMap[name]，未命中回退 picsum
+// name 直接传场所名（如 '成都大熊猫繁育研究基地'），lock 仅用于 picsum 回退稳定
+const lf = (name, lock) => {
+    if (name && imgMap[name]) return imgMap[name]
+    const seed = seedFromStr((name || '') + lock)
+    return `https://picsum.photos/seed/${seed}/400/400`
 }
 
 // -------- routes --------
@@ -159,7 +170,7 @@ const seed = () => {
     state.routes = [
         {
             id: 'seed-route-1', name: '成都经典三日游', savedAt: '2026-09-15',
-            img: lf('chengdu,street', 1),
+            img: lf('成都经典三日游', 1),
             routeData: {
                 routeName: '成都经典三日游', summary: '宽窄巷子+锦里+熊猫基地，三天玩转成都代表景点与美食',
                 tags: ['经典打卡', '美食体验', '熊猫必看'], estimatedCost: 2800,
@@ -183,7 +194,7 @@ const seed = () => {
         },
         {
             id: 'seed-route-2', name: '杭州西湖深度游', savedAt: '2026-09-12',
-            img: lf('west,lake', 2),
+            img: lf('杭州西湖深度游', 2),
             routeData: {
                 routeName: '杭州西湖深度游', summary: '西湖十景+灵隐寺+宋城，感受江南水乡的温婉韵味',
                 tags: ['自然风光', '历史人文'], estimatedCost: 3200,
@@ -201,7 +212,7 @@ const seed = () => {
         },
         {
             id: 'seed-route-3', name: '西安美食之旅', savedAt: '2026-08-30',
-            img: lf('xian,food', 3),
+            img: lf('西安美食之旅', 3),
             routeData: {
                 routeName: '西安美食之旅', summary: '回民街+永兴坊+大唐不夜城，一边逛古迹一边吃遍西安名小吃',
                 tags: ['美食主题', '历史人文'], estimatedCost: 2600,
@@ -225,7 +236,7 @@ const seed = () => {
         },
         {
             id: 'seed-route-4', name: '北京人文四日', savedAt: '2026-08-18',
-            img: lf('beijing,forbidden,city', 4),
+            img: lf('北京人文四日', 4),
             routeData: {
                 routeName: '北京人文四日', summary: '故宫+长城+颐和园+胡同，四天感受千年古都的皇家气派与烟火气',
                 tags: ['历史人文', '经典打卡'], estimatedCost: 3600,
@@ -252,7 +263,7 @@ const seed = () => {
         },
         {
             id: 'seed-route-5', name: '三亚海滨度假', savedAt: '2026-07-08',
-            img: lf('sanya,beach', 5),
+            img: lf('三亚海滨度假', 5),
             routeData: {
                 routeName: '三亚海滨度假', summary: '亚龙湾+蜈支洲岛+天涯海角，四天阳光沙滩慢节奏海岛度假',
                 tags: ['海岛度假', '亲子休闲'], estimatedCost: 4200,
@@ -278,18 +289,18 @@ const seed = () => {
         }
     ]
     state.foods = [
-        { id: 'seed-food-1', name: '成都小龙坎火锅', category: '餐饮', distance: '0.3km', rating: 4.8, refPrice: 128, priceText: '人均 ¥128', feature: '地道牛油锅底，毛肚黄喉招牌', reason: '距春熙路步行5分钟', tags: ['本地人推荐', '氛围热闹'], img: lf('hotpot', 11), savedAt: '2026-09-15' },
-        { id: 'seed-food-2', name: '杭州外婆家', category: '餐饮', distance: '0.8km', rating: 4.6, refPrice: 78, priceText: '人均 ¥78', feature: '西湖醋鱼、东坡肉招牌', reason: '湖滨银泰店，吃完逛西湖', tags: ['性价比高', '环境好'], img: lf('chinese,food', 12), savedAt: '2026-09-12' },
-        { id: 'seed-food-3', name: '重庆朝天门火锅', category: '餐饮', distance: '1.2km', rating: 4.5, refPrice: 118, priceText: '人均 ¥118', feature: '九宫格老火锅', reason: '解放碑附近', tags: ['深夜营业'], img: lf('hotpot,spicy', 13), savedAt: '2026-08-28' },
-        { id: 'seed-food-4', name: '广州陶陶居', category: '餐饮', distance: '0.6km', rating: 4.7, refPrice: 95, priceText: '人均 ¥95', feature: '百年老字号早茶', reason: '上下九步行街旁', tags: ['历史老店', '早茶必吃'], img: lf('dimsum', 14), savedAt: '2026-08-10' },
-        { id: 'seed-food-5', name: '西安老孙家泡馍', category: '餐饮', distance: '0.5km', rating: 4.6, refPrice: 55, priceText: '人均 ¥55', feature: '百年老字号牛羊肉泡馍', reason: '回民街核心地段，掰馍体验感十足', tags: ['老字号', '必吃榜'], img: lf('street,food', 15), savedAt: '2026-08-30' }
+        { id: 'seed-food-1', name: '成都小龙坎火锅', category: '餐饮', distance: '0.3km', rating: 4.8, refPrice: 128, priceText: '人均 ¥128', feature: '地道牛油锅底，毛肚黄喉招牌', reason: '距春熙路步行5分钟', tags: ['本地人推荐', '氛围热闹'], img: lf('成都小龙坎火锅', 11), savedAt: '2026-09-15' },
+        { id: 'seed-food-2', name: '杭州外婆家', category: '餐饮', distance: '0.8km', rating: 4.6, refPrice: 78, priceText: '人均 ¥78', feature: '西湖醋鱼、东坡肉招牌', reason: '湖滨银泰店，吃完逛西湖', tags: ['性价比高', '环境好'], img: lf('杭州外婆家', 12), savedAt: '2026-09-12' },
+        { id: 'seed-food-3', name: '重庆朝天门火锅', category: '餐饮', distance: '1.2km', rating: 4.5, refPrice: 118, priceText: '人均 ¥118', feature: '九宫格老火锅', reason: '解放碑附近', tags: ['深夜营业'], img: lf('重庆朝天门火锅', 13), savedAt: '2026-08-28' },
+        { id: 'seed-food-4', name: '广州陶陶居', category: '餐饮', distance: '0.6km', rating: 4.7, refPrice: 95, priceText: '人均 ¥95', feature: '百年老字号早茶', reason: '上下九步行街旁', tags: ['历史老店', '早茶必吃'], img: lf('广州陶陶居', 14), savedAt: '2026-08-10' },
+        { id: 'seed-food-5', name: '西安老孙家泡馍', category: '餐饮', distance: '0.5km', rating: 4.6, refPrice: 55, priceText: '人均 ¥55', feature: '百年老字号牛羊肉泡馍', reason: '回民街核心地段，掰馍体验感十足', tags: ['老字号', '必吃榜'], img: lf('西安老孙家泡馍', 15), savedAt: '2026-08-30' }
     ]
     state.spots = [
-        { id: 'seed-spot-1', name: '成都大熊猫繁育研究基地', category: '景点', rating: 4.9, priceText: '¥55', tags: ['亲子友好', '必去'], keywords: ['熊猫可爱', '园区大', '值得再来'], img: lf('panda', 21), savedAt: '2026-09-15' },
-        { id: 'seed-spot-2', name: '杭州西湖风景名胜区', category: '景点', rating: 4.8, priceText: '免费', tags: ['免费开放', '拍照圣地'], keywords: ['景色优美', '环线骑行', '夜景绝'], img: lf('hangzhou,lake', 22), savedAt: '2026-09-12' },
-        { id: 'seed-spot-3', name: '北京故宫博物院', category: '景点', rating: 4.9, priceText: '¥60', tags: ['历史人文', '世界遗产'], keywords: ['历史悠久', '讲解专业', '必看'], img: lf('forbidden,city', 23), savedAt: '2026-07-20' },
-        { id: 'seed-spot-4', name: '西安秦始皇兵马俑', category: '景点', rating: 4.8, priceText: '¥120', tags: ['世界奇迹', '震撼'], keywords: ['震撼', '讲解必听', '值得一去'], img: lf('terracotta', 24), savedAt: '2026-06-05' },
-        { id: 'seed-spot-5', name: '上海外滩', category: '景点', rating: 4.6, priceText: '免费', tags: ['夜景绝美', '地标'], keywords: ['夜景绝美', '拍照出片', '繁华'], img: lf('shanghai,night', 25), savedAt: '2026-05-18' }
+        { id: 'seed-spot-1', name: '成都大熊猫繁育研究基地', category: '景点', rating: 4.9, priceText: '¥55', tags: ['亲子友好', '必去'], keywords: ['熊猫可爱', '园区大', '值得再来'], img: lf('成都大熊猫繁育研究基地', 21), savedAt: '2026-09-15' },
+        { id: 'seed-spot-2', name: '杭州西湖风景名胜区', category: '景点', rating: 4.8, priceText: '免费', tags: ['免费开放', '拍照圣地'], keywords: ['景色优美', '环线骑行', '夜景绝'], img: lf('杭州西湖风景名胜区', 22), savedAt: '2026-09-12' },
+        { id: 'seed-spot-3', name: '北京故宫博物院', category: '景点', rating: 4.9, priceText: '¥60', tags: ['历史人文', '世界遗产'], keywords: ['历史悠久', '讲解专业', '必看'], img: lf('北京故宫博物院', 23), savedAt: '2026-07-20' },
+        { id: 'seed-spot-4', name: '西安秦始皇兵马俑', category: '景点', rating: 4.8, priceText: '¥120', tags: ['世界奇迹', '震撼'], keywords: ['震撼', '讲解必听', '值得一去'], img: lf('西安秦始皇兵马俑', 24), savedAt: '2026-06-05' },
+        { id: 'seed-spot-5', name: '上海外滩', category: '景点', rating: 4.6, priceText: '免费', tags: ['夜景绝美', '地标'], keywords: ['夜景绝美', '拍照出片', '繁华'], img: lf('上海外滩', 25), savedAt: '2026-05-18' }
     ]
     state.packs = [
         {
@@ -430,20 +441,20 @@ const seed = () => {
         }
     ]
 
-    // 酒店收藏示例（配合榜单收藏使用）
+    // 酒店收藏示例：国内热门高奢酒店（按评分降序排）
     state.hotels = [
-        { id: 'seed-hotel-1', name: '城市中心亚朵S酒店', rating: 4.8, priceText: '¥468/晚', tags: ['交通便利', '设施较新', '安静好眠'], keywords: ['床很舒服', '前台热情', '卫生到位', '早餐不错'], location: '市中心商圈', img: lf('hotel,bedroom', 41), savedAt: '2026-09-10' },
-        { id: 'seed-hotel-2', name: '湖畔度假酒店', rating: 4.9, priceText: '¥698/晚', tags: ['江景房', '服务贴心', '早餐丰富'], keywords: ['景色优美', '隔音好', '入住顺畅', '床很舒服'], location: '滨湖景观带', img: lf('hotel,lobby', 42), savedAt: '2026-08-22' },
-        { id: 'seed-hotel-3', name: '老城精品民宿', rating: 4.7, priceText: '¥328/晚', tags: ['环境温馨', '近地铁', '干净整洁'], keywords: ['卫生到位', '性价比高', '前台热情', '安静好眠'], location: '老城区步行街中段', img: lf('hotel,room', 43), savedAt: '2026-07-30' },
-        { id: 'seed-hotel-4', name: '桔子水晶酒店', rating: 4.6, priceText: '¥398/晚', tags: ['设施较新', '交通便利', '安静好眠'], keywords: ['床很舒服', '入住顺畅', '早餐不错', '隔音好'], location: '地铁2号线沿线', img: lf('hotel', 44), savedAt: '2026-06-18' },
-        { id: 'seed-hotel-5', name: '温泉度假酒店', rating: 4.8, priceText: '¥888/晚', tags: ['亲子友好', '服务贴心', '江景房'], keywords: ['前台热情', '卫生到位', '景色优美', '床很舒服'], location: '景区南门旁', img: lf('resort,hotel', 45), savedAt: '2026-05-05' }
+        { id: 'seed-hotel-1', name: '杭州西子湖四季酒店', rating: 4.9, priceText: '¥4580/晚', tags: ['江南园林', '服务贴心', '湖景房'], keywords: ['江南园林', '管家服务', '私汤温泉', '湖景绝美'], location: '杭州西湖区灵隐路', img: lf('杭州西子湖四季酒店', 41), savedAt: '2026-08-22' },
+        { id: 'seed-hotel-2', name: '上海外滩华尔道夫酒店', rating: 4.9, priceText: '¥3888/晚', tags: ['历史建筑', '外滩江景', '老上海风情'], keywords: ['外滩江景', '历史建筑', '老上海风情', '罗莱甜蜜之床'], location: '上海外滩中山东一路', img: lf('上海外滩华尔道夫酒店', 42), savedAt: '2026-08-15' },
+        { id: 'seed-hotel-3', name: '北京王府井文华东方酒店', rating: 4.9, priceText: '¥3288/晚', tags: ['城中奢华', '王府井核心', '米其林餐厅'], keywords: ['王府井核心', '管家服务', '米其林餐厅', '城中奢华'], location: '北京东城区王府井大街', img: lf('北京王府井文华东方酒店', 43), savedAt: '2026-07-30' },
+        { id: 'seed-hotel-4', name: '三亚亚特兰蒂斯酒店', rating: 4.8, priceText: '¥2688/晚', tags: ['水族馆酒店', '亲子度假', '失落的空间'], keywords: ['水族馆大堂', '失落的空间', '水世界亲子', 'C秀表演'], location: '三亚海棠湾海棠北路', img: lf('三亚亚特兰蒂斯酒店', 44), savedAt: '2026-06-18' },
+        { id: 'seed-hotel-5', name: '成都博舍 The Temple House', rating: 4.8, priceText: '¥1880/晚', tags: ['都市秘境', '设计感', '中西合璧'], keywords: ['都市秘境', '设计感强', '中式庭院', 'INNER餐厅'], location: '成都锦江区笔帖式街', img: lf('成都博舍 The Temple House', 45), savedAt: '2026-05-05' }
     ]
 
-    // 帖子收藏示例
+    // 帖子收藏示例（images 用 imgMap 真实图）
     state.posts = [
-        { id: 'p2', title: '成都一周吃遍老字号：从陈麻婆到贺记蛋烘糕', author: '晚风', avatar: '🌙', city: '成都', cat: '美食探店', content: '按本地人推荐的路线，连续 7 天吃了 14 家店，筛选出真正值得去的 8 家。', images: [lf('hotpot', 4), lf('chinese,food', 5)], tags: ['美食', '老字号', '成都'], likes: 512, comments: 89, savedAt: '2026-09-16' },
-        { id: 'p4', title: '北京 5 天 4 夜：故宫 + 长城 + 胡同深度游', author: '阿树', avatar: '🌳', city: '北京', cat: '行程攻略', content: '避开国庆人流高峰的小众路线，含故宫预约技巧、长城包车攻略。', images: [lf('china,pagoda', 10), lf('great,wall', 11)], tags: ['攻略', '历史人文', '北京'], likes: 678, comments: 103, savedAt: '2026-09-11' },
-        { id: 'p7', title: '西安 3 天 2 夜：兵马俑 + 回民街 + 大唐不夜城', author: '风筝不断线', avatar: '🪁', city: '西安', cat: '行程攻略', content: '含兵马俑讲解预约、回民街美食推荐、不夜城拍照攻略。', images: [lf('temple,old', 18), lf('china,pagoda', 19)], tags: ['攻略', '历史人文', '西安'], likes: 298, comments: 51, savedAt: '2026-09-04' }
+        { id: 'p2', title: '成都一周吃遍老字号：从陈麻婆到贺记蛋烘糕', author: '晚风', avatar: '🌙', city: '成都', cat: '美食探店', content: '按本地人推荐的路线，连续 7 天吃了 14 家店，筛选出真正值得去的 8 家。', images: [lf('成都小龙坎火锅', 4), lf('陈麻婆豆腐（骡马市总店）', 5)], tags: ['美食', '老字号', '成都'], likes: 512, comments: 89, savedAt: '2026-09-16' },
+        { id: 'p4', title: '北京 5 天 4 夜：故宫 + 长城 + 胡同深度游', author: '阿树', avatar: '🌳', city: '北京', cat: '行程攻略', content: '避开国庆人流高峰的小众路线，含故宫预约技巧、长城包车攻略。', images: [lf('北京故宫博物院', 10), lf('八达岭长城', 11)], tags: ['攻略', '历史人文', '北京'], likes: 678, comments: 103, savedAt: '2026-09-11' },
+        { id: 'p7', title: '西安 3 天 2 夜：兵马俑 + 回民街 + 大唐不夜城', author: '风筝不断线', avatar: '🪁', city: '西安', cat: '行程攻略', content: '含兵马俑讲解预约、回民街美食推荐、不夜城拍照攻略。', images: [lf('西安秦始皇兵马俑', 18), lf('回民街', 19)], tags: ['攻略', '历史人文', '西安'], likes: 298, comments: 51, savedAt: '2026-09-04' }
     ]
 }
 restore()

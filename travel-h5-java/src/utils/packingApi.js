@@ -9,7 +9,7 @@ import { post } from './request'
  * @param {string} data.tripType 出行类型：旅游 / 出差
  */
 export function generatePackingList(data) {
-    return post('packing/generate', data)
+    return post('travel/packing/generate', data)
 }
 
 /**
@@ -22,5 +22,5 @@ export function generatePackingList(data) {
  * @param {string[]} data.itemNames 当前已包含物品名称
  */
 export function checkPackingMissing(data) {
-    return post('packing/check', data)
+    return post('travel/packing/check', data)
 }

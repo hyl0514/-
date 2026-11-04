@@ -2,6 +2,8 @@ package org.example.traveljavaserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import org.example.traveljavaserver.dto.ChatRequestDTO;
 import org.example.traveljavaserver.utils.LLMutils;
 import org.example.traveljavaserver.vo.StreamChunkVO;
 import org.example.traveljavaserver.vo.StreamDoneVO;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +22,11 @@ import java.util.function.Consumer;
 
 
 @Service
+@RequiredArgsConstructor
 public class TravelService {
+
+    private final TravelPersistenceService persistenceService;
+
     @Value("${llm.api-key}")
     private String apiKey;
     @Value("${llm.base-url}")
@@ -146,7 +153,8 @@ public class TravelService {
                 "}";
     }
 
-    public SseEmitter chat(String message) {
+    public SseEmitter chat(Long userId, ChatRequestDTO chatRequestDTO) {
+        String message = chatRequestDTO.getMessage();
         // 设置超时时间为3分钟
         SseEmitter emitter = new SseEmitter(180000L);
         
@@ -169,6 +177,17 @@ public class TravelService {
             finalMessage = message;
         }
 
+        // 会话标识为空时生成 UUID，标题取首条消息前 20 字
+        String sessionKey = isBlank(chatRequestDTO.getSessionKey())
+                ? UUID.randomUUID().toString() : chatRequestDTO.getSessionKey().trim();
+        String title = isBlank(chatRequestDTO.getSessionTitle())
+                ? firstChars(message.trim(), 20) : chatRequestDTO.getSessionTitle().trim();
+        Long sessionId = persistenceService.ensureChatSession(userId, sessionKey, title);
+        persistenceService.saveChatMessage(sessionId, "user", finalMessage);
+
+        final Long currentSessionId = sessionId;
+        final String currentSessionKey = sessionKey;
+
         executorService.execute(() -> {
             try {
                 String systemPrompt = "你是一个友好的旅游助手,请用中文简洁回答用户关于旅游的问题。回答不要超过300字。";
@@ -187,9 +206,17 @@ public class TravelService {
                     // 请求被取消时的清理逻辑
                 };
                 
-                llmUtils.chatStream(systemPrompt, finalMessage, callback, onCancel);
-                
-                String doneJson = objectMapper.writeValueAsString(StreamDoneVO.of());
+                String fullContent = llmUtils.chatStream(systemPrompt, finalMessage, callback, onCancel);
+
+                // 流式结束后保存完整 assistant 回复
+                try {
+                    persistenceService.saveChatMessage(currentSessionId, "assistant", fullContent);
+                } catch (Exception ignored) {
+                    // 落库失败不影响已生成的流式内容
+                }
+
+                String doneJson = objectMapper.writeValueAsString(
+                        StreamDoneVO.of(currentSessionKey, currentSessionId));
                 emitter.send(SseEmitter.event().data(doneJson));
                 emitter.complete();
             }
@@ -225,5 +252,13 @@ public class TravelService {
         });
         
         return emitter;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String firstChars(String value, int maxLength) {
+        return value.length() <= maxLength ? value : value.substring(0, maxLength);
     }
 }

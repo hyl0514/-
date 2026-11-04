@@ -5,7 +5,8 @@
  * - localStorage 持久化（key pc-auth-v1）
  */
 import { reactive } from 'vue'
-import { post, setToken, clearToken } from '../utils/request'
+import { setToken, clearToken } from '../utils/request'
+import { authApi } from '../api'
 
 const STORAGE_KEY = 'pc-auth-v1'
 
@@ -28,12 +29,12 @@ const state = reactive({
     interests: []
 })
 
-// 启动恢复
+// 启动恢复（只恢复合法角色，避免脏数据导致权限异常）
 try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
         const saved = JSON.parse(raw)
-        if (saved.isLoggedIn) Object.assign(state, saved)
+        if (saved.isLoggedIn && ['admin', 'user'].includes(saved.role)) Object.assign(state, saved)
     }
 } catch {}
 
@@ -47,16 +48,26 @@ const persist = () => {
     } catch {}
 }
 
-const applyAccount = (username, acc, backend = false) => {
+// 兼容后端与本地两种字段命名；role 只允许 admin / user
+const applyAccount = (username, acc = {}, backend = false) => {
     state.isLoggedIn = true
     state.username = username
-    state.role = acc.role || 'user'
-    state.name = acc.name || username
-    state.avatar = acc.avatar || '✈️'
-    state.sign = acc.sign || ''
-    state.origin = acc.origin || ''
+    state.role = acc.role === 'admin' ? 'admin' : 'user'
+    state.name = acc.nickname || acc.name || username
+    state.avatar = acc.avatar || acc.authorAvatar || '✈️'
+    state.sign = acc.sign || acc.signature || ''
+    state.origin = acc.origin || acc.city || ''
     state.budget = acc.budget || ''
-    state.interests = Array.isArray(acc.interests) ? [...acc.interests] : []
+    if (Array.isArray(acc.interests)) state.interests = [...acc.interests]
+    else if (typeof acc.interests === 'string') {
+        // 后端 interests 为 JSON 字符串（如 ["自然风光","美食探店"]）
+        try {
+            const arr = JSON.parse(acc.interests)
+            state.interests = Array.isArray(arr) ? arr : [acc.interests]
+        } catch {
+            state.interests = acc.interests.split(/[,，]/).filter(Boolean)
+        }
+    } else state.interests = []
     persist()
 }
 
@@ -70,7 +81,7 @@ const login = async (username, password) => {
 
     // ① 尝试后端
     try {
-        const data = await post('/auth/login', { username: user, password: pwd })
+        const data = await authApi.login({ username: user, password: pwd })
         if (data && data.user) {
             setToken(data.token)
             applyAccount(user, { ...data.user }, true)
@@ -121,7 +132,7 @@ const updateProfile = async (patch) => {
     persist()
     // 同步到后端（失败不阻塞）
     try {
-        await post('/user/me', patch)
+        await authApi.updateMe(patch)
     } catch {}
 }
 

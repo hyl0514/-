@@ -40,7 +40,7 @@
           :key="i"
           :src="img"
           alt=""
-          @error="$event.target.style.opacity='0.3'"
+          @error="onImgError"
         >
         <div class="ccard-more" v-if="post.images.length > 4">+{{ post.images.length - 4 }}</div>
       </div>
@@ -97,6 +97,17 @@ const adminOpen = ref(false)
 
 const colors = ['#2374DD', '#0EA5A4', '#E8912F', '#e94560', '#667eea', '#764ba2']
 const avatarBg = computed(() => colors[props.post.avatar.length % colors.length])
+
+// 图片加载失败时的兜底占位（内联 SVG，离线也可见）
+const FALLBACK_IMG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e3ecf7"/><stop offset="1" stop-color="#cddced"/></linearGradient></defs><rect width="600" height="450" fill="url(#g)"/><text x="300" y="238" font-size="34" fill="#8fa6c0" text-anchor="middle">✈️</text></svg>'
+)
+const onImgError = (e) => {
+    const t = e.target
+    if (t.dataset.fb) return
+    t.dataset.fb = '1'
+    t.src = FALLBACK_IMG
+}
 
 const imgsClass = computed(() => {
     const n = props.post.images?.length || 0

@@ -2,8 +2,11 @@ package org.example.traveljavaserver.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.traveljavaserver.auth.CurrentUser;
+import org.example.traveljavaserver.auth.LoginUser;
 import org.example.traveljavaserver.dto.PoiRequestDTO;
 import org.example.traveljavaserver.service.PoiService;
+import org.example.traveljavaserver.service.TravelPersistenceService;
 import org.example.traveljavaserver.vo.PoiRecommendVO;
 import org.example.traveljavaserver.vo.Result;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,14 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class PoiController {
 
     private final PoiService poiService;
+    private final TravelPersistenceService persistenceService;
 
     /**
-     * 根据选中路线推荐周边酒店、景点、餐饮、娱乐场所
+     * 根据选中路线推荐周边酒店、景点、餐饮、娱乐场所，并写入 poi_cache
      */
     @PostMapping("/recommend")
-    public Result<PoiRecommendVO> recommend(@Valid @RequestBody PoiRequestDTO requestDTO) {
+    public Result<PoiRecommendVO> recommend(@CurrentUser LoginUser me,
+                                            @Valid @RequestBody PoiRequestDTO requestDTO) {
         try {
             PoiRecommendVO vo = poiService.recommend(requestDTO.getDestination(), requestDTO.getRouteContext());
+            vo.setCacheId(persistenceService.savePoi(me.userId(), requestDTO, vo));
             return Result.ok(vo);
         } catch (Exception e) {
             return Result.fail(500, "场所推荐失败: " + e.getMessage());

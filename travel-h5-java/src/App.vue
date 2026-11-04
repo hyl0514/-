@@ -27,5 +27,12 @@ import SideNav from './components/SideNav.vue'
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  position: relative;
+  /* 固定背景图 - 不随页面滚动 */
+  background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=3840&q=100');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 </style>

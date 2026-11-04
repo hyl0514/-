@@ -2,6 +2,8 @@ package org.example.traveljavaserver.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.traveljavaserver.auth.CurrentUser;
+import org.example.traveljavaserver.auth.LoginUser;
 import org.example.traveljavaserver.dto.ChatRequestDTO;
 import org.example.traveljavaserver.service.TravelService;
 import org.example.traveljavaserver.vo.TravelRecommendVO;
@@ -36,7 +38,8 @@ public class TravelController {
     }
 
     @PostMapping(value ="/chat", produces = "text/event-stream")
-    public SseEmitter chat(@Valid @RequestBody ChatRequestDTO chatRequestDTO) {
-        return travelService.chat(chatRequestDTO.getMessage());
+    public SseEmitter chat(@CurrentUser LoginUser me,
+                           @Valid @RequestBody ChatRequestDTO chatRequestDTO) {
+        return travelService.chat(me.userId(), chatRequestDTO);
     }
 }

@@ -7,5 +7,5 @@ import { post } from './request'
  * @param {string} data.routeContext 每日点位上下文
  */
 export function recommendPoi(data) {
-    return post('poi/recommend', data)
+    return post('travel/poi/recommend', data)
 }

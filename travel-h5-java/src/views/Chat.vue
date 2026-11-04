@@ -237,6 +237,18 @@ const handleClickTag = (q) => {
 
 const messages = ref([])
 
+// 当前会话标识：同一页面内的多轮对话写入同一个数据库会话
+const chatSessionKey = (() => {
+    try {
+        let k = sessionStorage.getItem('pc-chat-session')
+        if (!k) {
+            k = `web-${Date.now()}${Math.random().toString(36).slice(2, 6)}`
+            sessionStorage.setItem('pc-chat-session', k)
+        }
+        return k
+    } catch { return `web-${Date.now()}` }
+})()
+
 const onBack = () => {
     // 离开页面时取消正在进行的请求
     cancelCurrentRequest()
@@ -306,7 +318,11 @@ const fetchAIResponse = (userMsg) => {
     let fullResponse = ''
 
     // 保存当前请求的取消函数
-    currentRequest = fetchStream('chat', { message: userMsg }, (chunk) => {
+    currentRequest = fetchStream('/travel/chat', {
+        message: userMsg,
+        sessionKey: chatSessionKey,
+        sessionTitle: userMsg.slice(0, 20)
+    }, (chunk) => {
         fullResponse += chunk
         const lastMsg =  messages.value[messages.value.length - 1]
         if (lastMsg && lastMsg.role === 'ai') {

@@ -3,6 +3,7 @@
  * 按「城市名 + 类别 + 榜单色」做确定性种子生成，同一城市每次刷新数据稳定；
  * 数据结构按「AI 分析评论后输出红黑榜」的目标设计，后续接入后端 AI 接口时用同结构替换本模块即可。
  */
+import { imgMap } from './imgMap.js'
 
 // 字符串哈希
 function hashString(str) {
@@ -27,12 +28,19 @@ function mulberry32(seed) {
 
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)]
 
-// 生成条目配图：trae 文生图按关键词定制生成真实感照片，同场所不同机位用 idx 区分
+// 名称归一化：去掉中文引号，用于匹配 imgMap
+const normalizeName = (name) => name ? name.replace(/[""]/g, '') : name
+
+// 生成条目配图：优先取 imgMap 真实场所图（按 name 命中），未命中按 keywords 用 picsum 回退
 const genImg = (name, keywords, idx = 0) => {
-    const kw = (keywords || 'travel,scenic').split(',').map(s => s.trim()).filter(Boolean).join(' ')
-    const prompt = encodeURIComponent(`${kw}, professional travel photography, high quality, view ${idx + 1}`)
-    return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${prompt}&image_size=landscape_4_3`
+    const normalizedName = normalizeName(name)
+    if (normalizedName && imgMap[normalizedName]) return imgMap[normalizedName]
+    const seed = hashString(`${name || ''}${keywords || 'travel'}${idx}`).toString(36)
+    return `https://picsum.photos/seed/${seed}/600/400`
 }
+
+// 黑榜按类别取通用图（不指向具体商家）
+const blackImg = (catLabel) => imgMap[`黑榜${catLabel}`] || genImg(null, 'travel,scenic')
 
 // ---------------- 名称池 ----------------
 
@@ -165,8 +173,8 @@ const BLACK_PROS = ['位置相对方便', '价格看起来便宜', '宣传噱头
 const REVIEWERS = ['旅行者', '晚风', '一路向南', '山那边', '慢半拍', '阿树', '不打烊', '看海的人', '小陈同学', '周末出逃', '行舟', '白日梦想家', '橘子汽水', '路过人间', '风筝不断线', '南方的巷子', '一半月光', '街角咖啡', '背包十年', '困困鱼']
 
 const CAT_KEYS = ['hotel', 'food', 'spot']
-const RED_COUNT = 8
-const BLACK_COUNT = 6
+const RED_COUNT = 20
+const BLACK_COUNT = 20
 
 // ---------------- 真实场所种子（南昌 / 成都演示城市） ----------------
 // 红榜：真实场所名 + 真实参考价 + 专属图片关键词；黑榜：描述性名称（不指向具体商家）
@@ -180,7 +188,21 @@ const REAL_PLACE_SEEDS = {
                 { name: '锦里古街', rating: 4.6, priceText: '免费', tags: ['夜景绝美', '小吃多'], kw: ['夜景好看', '小吃街', '红灯笼', '川剧表演'], loc: '武侯区武侯祠大街231号', imgKw: 'chengdu,night,street' },
                 { name: '都江堰景区', rating: 4.8, priceText: '¥80', tags: ['世界遗产', '震撼'], kw: ['水利工程', '古人智慧', '讲解必听', '空气清新'], loc: '都江堰市公园路76号', imgKw: 'china,river,dam' },
                 { name: '武侯祠博物馆', rating: 4.7, priceText: '¥50', tags: ['历史人文', '三国迷必去'], kw: ['三国文化', '红墙拍照', '讲解专业', '银杏'], loc: '武侯区武侯祠大街231号', imgKw: 'china,temple' },
-                { name: '春熙路·太古里', rating: 4.6, priceText: '免费', tags: ['逛街购物', '网红打卡'], kw: ['繁华', '熊猫爬墙', '街拍', '美食集中'], loc: '锦江区春熙路', imgKw: 'chengdu,city,night' }
+                { name: '春熙路·太古里', rating: 4.6, priceText: '免费', tags: ['逛街购物', '网红打卡'], kw: ['繁华', '熊猫爬墙', '街拍', '美食集中'], loc: '锦江区春熙路', imgKw: 'chengdu,city,night' },
+                { name: '青城山', rating: 4.7, priceText: '¥80', tags: ['道教名山', '空气清新'], kw: ['道教文化', '登山步道', '古树参天', '幽静'], loc: '都江堰市青城山镇', imgKw: 'china,mountain' },
+                { name: '西岭雪山', rating: 4.6, priceText: '¥120', tags: ['滑雪胜地', '自然风光'], kw: ['雪山美景', '滑雪体验', '冬季必去', '云海'], loc: '大邑县西岭镇', imgKw: 'china,snow,mountain' },
+                { name: '金沙遗址博物馆', rating: 4.7, priceText: '¥70', tags: ['古蜀文明', '文物珍贵'], kw: ['太阳神鸟', '考古遗址', '历史厚重', '讲解专业'], loc: '青羊区金沙遗址路2号', imgKw: 'china,museum,ancient' },
+                { name: '文殊院', rating: 4.6, priceText: '免费', tags: ['佛教圣地', '免费开放'], kw: ['佛教文化', '古建筑', '素斋好吃', '清静'], loc: '青羊区文殊院街66号', imgKw: 'china,temple,buddhist' },
+                { name: '东郊记忆', rating: 4.5, priceText: '免费', tags: ['文创园区', '拍照圣地'], kw: ['工业风', '文艺范', '展览多', '咖啡香'], loc: '成华区建设南路1号', imgKw: 'china,art,district' },
+                { name: '人民公园', rating: 4.5, priceText: '免费', tags: ['本地生活', '休闲放松'], kw: ['盖碗茶', '采耳体验', '本地人聚集', '悠闲'], loc: '青羊区少城路12号', imgKw: 'china,park,chengdu' },
+                { name: '成都博物馆', rating: 4.7, priceText: '免费', tags: ['城市历史', '免费参观'], kw: ['成都历史', '文物丰富', '互动展览', '空调舒适'], loc: '青羊区小河街1号', imgKw: 'chengdu,museum' },
+                { name: '九眼桥酒吧街', rating: 4.4, priceText: '免费', tags: ['夜生活', '锦江夜景'], kw: ['酒吧文化', '夜景迷人', '音乐现场', '年轻人聚集'], loc: '武侯区九眼桥', imgKw: 'chengdu,bar,night' },
+                { name: '黄龙溪古镇', rating: 4.5, priceText: '免费', tags: ['古镇风情', '玩水胜地'], kw: ['古街老巷', '溪水清凉', '夏日必去', '小吃多'], loc: '双流区黄龙溪镇', imgKw: 'china,ancient,town' },
+                { name: '安仁古镇', rating: 4.6, priceText: '免费', tags: ['博物馆镇', '民国风情'], kw: ['刘氏庄园', '建川博物馆', '历史建筑', '文艺气息'], loc: '大邑县安仁镇', imgKw: 'china,ancient,town' },
+                { name: '成都欢乐谷', rating: 4.5, priceText: '¥200', tags: ['主题乐园', '亲子必去'], kw: ['游乐设施', '刺激好玩', '表演精彩', '适合全家'], loc: '金牛区西华大道16号', imgKw: 'china,theme,park' },
+                { name: '国色天乡', rating: 4.4, priceText: '¥150', tags: ['水上乐园', '夏日清凉'], kw: ['水上项目', '刺激好玩', '夏日必去', '家庭欢乐'], loc: '温江区万春镇', imgKw: 'china,water,park' },
+                { name: '平乐古镇', rating: 4.5, priceText: '免费', tags: ['川西古镇', '竹海风光'], kw: ['古街老巷', '竹林清幽', '避暑胜地', '农家菜香'], loc: '邛崃市平乐镇', imgKw: 'china,ancient,town' },
+                { name: '街子古镇', rating: 4.4, priceText: '免费', tags: ['川西古镇', '味江河畔'], kw: ['古街老巷', '河水清澈', '夏日避暑', '农家菜'], loc: '崇州市街子镇', imgKw: 'china,ancient,town' }
             ],
             black: [
                 { name: '春熙路地铁口一日游拉客点', rating: 2.8, priceText: '¥99起', tags: ['强制购物', '行程缩水'], kw: ['强制购物', '行程缩水', '拉客缠人'], loc: '锦江区春熙路地铁站B口', imgKw: 'chengdu,street' },
@@ -297,31 +319,19 @@ export function getCityBoard(city) {
     return board
 }
 
-// ---------------- 数据库真实种子（MySQL rank_items 表，经后端 /api/ranks 下发） ----------------
-import { get } from './request'
-
-// 城市 → 后端种子缓存；buildList 优先级：BACKEND_SEEDS > REAL_PLACE_SEEDS > 通用池
+// ---------------- 本地真实种子（纯前端，无需后端） ----------------
+// buildList 优先级：REAL_PLACE_SEEDS > 通用名称池
 const BACKEND_SEEDS = {}
 
 /**
- * 从后端拉取指定城市的真实榜单种子（含真实照片 URL）
- * @returns {Promise<boolean>} true=数据库有该城市数据
+ * 获取指定城市的真实榜单种子（纯本地数据）
+ * @returns {Promise<boolean>} true=本地有该城市数据
  */
 export async function fetchRealSeeds(city) {
     const c = (city || '').trim()
     if (!c) return false
-    if (BACKEND_SEEDS[c]) return true
-    try {
-        const data = await get('/ranks', { city: c })
-        if (data && data.hotel) {
-            // 后端 seed → 本地种子结构（buildList 兼容字段：name/rating/priceText/tags/kw/loc/imgKw/img）
-            BACKEND_SEEDS[c] = data
-            return true
-        }
-        return false
-    } catch {
-        return false // 后端不可用，静默走本地种子
-    }
+    // 纯本地种子，无需后端请求
+    return !!REAL_PLACE_SEEDS[c]
 }
 
 function buildList(city, catKey, color, meta) {
@@ -435,8 +445,8 @@ function buildList(city, catKey, color, meta) {
             keywords,
             aiConclusion,
             comments,
-            img: seedItem?.img || genImg(name, imgKw || meta.scene),
-            gallery: GALLERY_SCENES[catKey].map(([label, scene], gi) => genImg(`${name} ${label}`, scene, gi + 1)),
+            img: imgMap[name] || genImg(name, imgKw || meta.scene),
+            gallery: GALLERY_SCENES[catKey].map(([label, scene], gi) => imgMap[name] || genImg(`${name} ${label}`, scene, gi + 1)),
             address: useReal ? loc : `${city}${loc}${pick(rng, ADDRESS_TAIL)}`,
             openTime: pick(rng, OPEN_TIME[catKey]),
             duration: pick(rng, DURATION[catKey]),

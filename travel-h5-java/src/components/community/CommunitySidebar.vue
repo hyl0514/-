@@ -6,23 +6,23 @@
       <div class="cs-title">📊 社区数据</div>
       <div class="cs-stat">
         <span class="cs-label">今日新发</span>
-        <span class="cs-val blue">{{ store.stats.today }}</span>
+        <span class="cs-val blue">{{ stats.today }}</span>
       </div>
       <div class="cs-stat">
         <span class="cs-label">本周热门</span>
-        <span class="cs-val orange">{{ store.stats.weekHot }}</span>
+        <span class="cs-val orange">{{ stats.weekHot }}</span>
       </div>
       <div class="cs-stat">
         <span class="cs-label">总动态数</span>
-        <span class="cs-val">{{ store.stats.total }}</span>
+        <span class="cs-val">{{ stats.total }}</span>
       </div>
     </div>
 
     <!-- 模块 2：TOP 3 热门 -->
     <div class="cs-card">
       <div class="cs-title">🏆 本周热门 TOP 3</div>
-      <div class="top-list" v-if="store.topHot.length">
-        <div v-for="(p, i) in store.topHot" :key="p?.id || ('hot-' + i)" class="top-item" @click="goTop(p)">
+      <div class="top-list" v-if="topHot.length">
+        <div v-for="(p, i) in topHot" :key="p?.id || ('hot-' + i)" class="top-item" @click="goTop(p)">
           <div class="top-rank" :class="'r' + (i + 1)">{{ i + 1 }}</div>
           <div class="top-info">
             <div class="top-name">{{ p?.title?.slice(0, 18) || '未知标题' }}</div>
@@ -63,7 +63,7 @@
     </div>
 
     <!-- 管理员入口（根据 authStore 角色显示） -->
-    <div class="cs-card admin-switch" v-if="store.isAdmin">
+    <div class="cs-card admin-switch" v-if="isAdmin">
       <div class="cs-title">⚡ 管理员快捷入口</div>
       <button class="pc-btn pc-btn-sm pc-btn-primary full" @click="goAdmin">进入审核后台 →</button>
       <button class="pc-btn pc-btn-sm full" @click="onLogout">退出登录</button>
@@ -77,6 +77,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCommunityStore } from '../../store/communityStore'
 import { useAuthStore } from '../../store/authStore'
@@ -84,6 +85,11 @@ import { useAuthStore } from '../../store/authStore'
 const store = useCommunityStore()
 const auth = useAuthStore()
 const router = useRouter()
+
+// computed 需在模板中解包（.value）
+const stats = computed(() => store.stats.value)
+const topHot = computed(() => store.topHot.value)
+const isAdmin = computed(() => auth.isAdmin())
 
 const goTop = (p) => { /* 后续做跳转 */ }
 const goAdmin = () => router.push('/admin')

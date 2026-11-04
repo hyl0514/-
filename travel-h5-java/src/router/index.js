@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../store/authStore'
+import toast from '../utils/msg'
 
 // PC 版应用：登录 / 个人主页 / 行程规划 / 行李清单 / 榜单排行 / 预算支出 / 个人收藏 / 旅友空间 / 管理员后台
 const routes = [
@@ -37,8 +38,9 @@ router.beforeEach((to) => {
     if (auth.state.isLoggedIn && to.path === '/login') {
         return { path: '/' }
     }
-    // adminOnly 路由
+    // adminOnly 路由：普通用户无权限访问
     if (to.meta.adminOnly && auth.state.role !== 'admin') {
+        toast.error('该页面仅管理员可访问')
         return { path: '/community' }
     }
 })

@@ -9,6 +9,11 @@ import lombok.Data;
 public class BudgetAdviceVO {
 
     /**
+     * 落库后的预算方案 id
+     */
+    private Long planId;
+
+    /**
      * AI 省钱建议（多条用换行分隔）
      */
     private String advice;

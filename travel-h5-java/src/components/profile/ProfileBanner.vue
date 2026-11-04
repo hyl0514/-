@@ -6,6 +6,29 @@
       <div class="pb-blob b1"></div>
       <div class="pb-blob b2"></div>
       <div class="pb-blob b3"></div>
+      <!-- 3D 漂浮装饰 -->
+      <div class="pb-3d-compass">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="20" stroke="rgba(35,116,221,0.25)" stroke-width="2"/>
+          <path d="M24 8L20 24L24 20L28 24Z" fill="#2374DD" opacity="0.3"/>
+          <path d="M24 40L28 24L24 28L20 24Z" fill="#E8912F" opacity="0.25"/>
+          <circle cx="24" cy="24" r="3" fill="#2374DD" opacity="0.2"/>
+        </svg>
+      </div>
+      <div class="pb-3d-globe">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+          <circle cx="22" cy="22" r="18" stroke="rgba(14,165,164,0.25)" stroke-width="2"/>
+          <ellipse cx="22" cy="22" rx="18" ry="8" stroke="rgba(14,165,164,0.15)" stroke-width="1.5"/>
+          <ellipse cx="22" cy="22" rx="8" ry="18" stroke="rgba(14,165,164,0.15)" stroke-width="1.5"/>
+          <path d="M22 4v36M4 22h36" stroke="rgba(14,165,164,0.15)" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="pb-3d-map">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <path d="M8 12L16 8L24 12L32 8V28L24 32L16 28L8 32V12Z" stroke="rgba(232,145,47,0.2)" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M16 8V28M24 12V32" stroke="rgba(232,145,47,0.15)" stroke-width="1.5"/>
+        </svg>
+      </div>
       <div class="pb-overlay"></div>
     </div>
 
@@ -217,6 +240,15 @@ const onSave = () => {
 .pb-blob.b1 { width: 320px; height: 320px; top: -80px; right: -60px; background: radial-gradient(circle, #2374DD, transparent 70%); }
 .pb-blob.b2 { width: 240px; height: 240px; bottom: -50px; left: -40px; background: radial-gradient(circle, #0EA5A4, transparent 70%); opacity: 0.25; }
 .pb-blob.b3 { width: 200px; height: 200px; top: 20%; left: 40%; background: radial-gradient(circle, #E8912F, transparent 70%); opacity: 0.18; }
+
+/* 3D 漂浮装饰 */
+.pb-3d-compass { position: absolute; top: 15%; right: 38%; animation: pbFloat1 6s ease-in-out infinite; }
+.pb-3d-globe { position: absolute; bottom: 18%; right: 12%; animation: pbFloat2 7s ease-in-out infinite; }
+.pb-3d-map { position: absolute; top: 25%; right: 8%; animation: pbFloat3 5s ease-in-out infinite; }
+
+@keyframes pbFloat1 { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(8deg); } }
+@keyframes pbFloat2 { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(-5deg); } }
+@keyframes pbFloat3 { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10px) rotate(5deg); } }
 
 .pb-content { position: relative; padding: 28px 36px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
 .pb-user { display: flex; align-items: center; gap: 22px; }

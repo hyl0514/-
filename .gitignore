@@ -1,0 +1,44 @@
+# ============================================
+# 智能旅游规划与预算管理系统 · 根目录忽略规则
+# 两个子项目（travel-h5-java / travel-java-server）均有自己的 .gitignore
+# ============================================
+
+# --- 本地环境 & 密钥 ---
+.env.local
+.env.*.local
+*.secret
+*.pem
+
+# --- IDE ---
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.sw?
+
+# --- 系统 ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- 运行产物 ---
+*.log
+*.tmp
+*.bak
+.screenshots/
+
+# --- 数据库（本地开发） ---
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+
+# --- 子项目运行时（兜底，子项目 .gitignore 已覆盖） ---
+travel-h5-java/node_modules/
+travel-h5-java/dist/
+travel-h5-java/dist-ssr/
+travel-h5-java/.vite/
+travel-h5-java/*.local
+travel-java-server/target/
+travel-java-server/.mvn/wrapper/maven-wrapper.jar

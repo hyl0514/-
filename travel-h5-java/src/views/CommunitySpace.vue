@@ -6,6 +6,12 @@
     <!-- 筛选栏 -->
     <CommunityFilter />
 
+    <!-- 我的动态提示：说明发布 → 审核 → 公开的流程 -->
+    <div class="cs-mine-tip" v-if="store.state.scope === 'mine'">
+      <span class="cmt-icon">📌</span>
+      <span>这里能看到你的全部动态：<b class="done">已通过</b>的会公开到社区广场，<b class="wait">待审核</b>的需管理员批准后才对其他用户展示。</span>
+    </div>
+
     <!-- 主内容区：瀑布流 + 右侧栏 -->
     <div class="cs-main">
       <div class="cs-waterfall">
@@ -19,7 +25,7 @@
           </div>
         </div>
 
-        <template v-else-if="store.filteredPosts.length">
+        <template v-else-if="store.filteredPosts.value.length">
           <div class="wf-col" v-for="(col, ci) in columns" :key="ci">
             <CommunityCard
               v-for="post in col"
@@ -32,8 +38,9 @@
         </template>
 
         <div class="cs-empty" v-else>
-          <div class="ce-emoji">📭</div>
-          <p>暂无动态，换个筛选条件试试？</p>
+          <div class="ce-emoji">{{ store.state.scope === 'mine' ? '📝' : '📭' }}</div>
+          <p v-if="store.state.scope === 'mine'">你还没有发布过动态，点击右上角「发布我的旅途」开始记录吧</p>
+          <p v-else>暂无动态，换个筛选条件试试？</p>
         </div>
       </div>
 
@@ -58,17 +65,16 @@ import CommunitySidebar from '../components/community/CommunitySidebar.vue'
 import PublishModal from '../components/community/PublishModal.vue'
 import CommentDrawer from '../components/community/CommentDrawer.vue'
 import { useCommunityStore } from '../store/communityStore'
+import { useAuthStore } from '../store/authStore'
 import toast from '../utils/msg'
 
 const store = useCommunityStore()
+const auth = useAuthStore()
 
-// 页面挂载时清理筛选残留 + 确保数据正确
-onMounted(() => {
+// 页面挂载：清理筛选残留 + 异步拉取后端数据（后端不可用时保持本地数据）
+onMounted(async () => {
     store.resetFilters()
-    // 如果数据异常，强制重置
-    if (store.state.posts.filter(p => p && p.status === 'approved').length < 5) {
-        store.resetData()
-    }
+    await store.refreshFromBackend()
 })
 
 const showPublish = ref(false)
@@ -94,7 +100,16 @@ const commentPost = ref(null)
 const onOpen = () => { /* 后续做详情页 */ }
 const onComment = (post) => { commentPost.value = post; showComment.value = true }
 
-const onPosted = () => { /* 发布后刷新 */ }
+// 发布成功后：提示审核状态，并跳转到「我的动态」让作者看到自己的待审核内容
+const onPosted = async (post) => {
+    if (post?.status === 'approved') {
+        toast.success('发布成功，已对全站用户可见 ✅')
+    } else {
+        toast.success('发布成功，等待管理员审核通过后即可被其他用户看到 ⏳')
+    }
+    if (auth.state.isLoggedIn) store.state.scope = 'mine'
+    await store.refreshFromBackend()
+}
 </script>
 
 <style scoped>
@@ -166,6 +181,25 @@ const onPosted = () => { /* 发布后刷新 */ }
 }
 
 .ce-emoji { font-size: 40px; margin-bottom: 10px; }
+
+/* 我的动态流程提示条 */
+.cs-mine-tip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 11px 16px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #eef5ff, #f2fbf8);
+    border: 1px solid #dce8f8;
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.6;
+}
+
+.cmt-icon { font-size: 15px; flex-shrink: 0; }
+.cs-mine-tip .done { color: #12a87a; }
+.cs-mine-tip .wait { color: #e08a12; }
 
 /* 发布弹窗 */
 .publish-modal {

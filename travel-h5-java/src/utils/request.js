@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-// 后端基础地址
-export const API_BASE = 'http://localhost:3200/api'
+// 后端基础地址：默认走 Vite 代理 /api（见 vite.config.js），可用环境变量 VITE_API_BASE 覆盖
+export const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 // 创建 axios 实例
 const request = axios.create({

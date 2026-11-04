@@ -7,7 +7,7 @@
       </div>
       <div class="ap-head-actions">
         <button class="pc-btn pc-btn-sm" @click="$router.push('/community')">← 返回前台</button>
-        <button class="pc-btn pc-btn-sm" @click="store.setAdmin(false)">退出管理员模式</button>
+        <button class="pc-btn pc-btn-sm" @click="onExitAdmin">退出登录</button>
       </div>
     </header>
 
@@ -136,16 +136,29 @@
 
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useCommunityStore } from '../store/communityStore'
+import { useAuthStore } from '../store/authStore'
 import toast from '../utils/msg'
 
 const store = useCommunityStore()
-onMounted(() => {
-    if (!store.state.isAdmin) {
-        store.setAdmin(true)
-        toast.success('已切换到管理员模式')
+const auth = useAuthStore()
+const router = useRouter()
+
+// 只有管理员可进入：非管理员直接退回社区页
+onMounted(async () => {
+    if (!auth.isAdmin()) {
+        toast.error('仅管理员可访问审核后台')
+        router.replace('/community')
+        return
     }
+    await store.refreshFromBackend()
 })
+
+const onExitAdmin = () => {
+    auth.logout()
+    router.replace('/community')
+}
 
 const cats = store.CATS.filter(c => c !== '全部')
 
