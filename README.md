@@ -1,4 +1,4 @@
-# 🌏 智能旅游规划与预算管理系统
+﻿# 🌏 智能旅游规划与预算管理系统
 
 ![Vue3](https://img.shields.io/badge/Vue-3.5-42b883?logo=vue&logoColor=fff)
 ![SpringBoot](https://img.shields.io/badge/Spring%20Boot-4.0-6db33f?logo=spring&logoColor=fff)
@@ -56,34 +56,34 @@
 输入目的地、天数、偏好，AI 一次生成 2~3 套完整多日路线（每套都真实落库返回 tripId）。
 
 ### ④ AI 智能问答（SSE 流式）
-![AI 对话](docs/screenshots/s-04-chat.png)
+![AI 对话](docs/screenshots/s-09-ai-chat.png)
 
 按 `sessionKey` 自动归组对话，每轮 user + assistant 消息完整写入 `chat_sessions / chat_messages`。
 
 ### ⑤ 旅友空间（社区）
-![社区广场](docs/screenshots/s-05-community.png)
+![社区广场](docs/screenshots/s-04-community.png)
 
 - 广场：所有已审核通过的公开动态
 - 我的动态：自己的全部帖子（含待审核/已驳回）
 - 管理员入口：带待审核角标，一键进审核后台
 
 ### ⑥ 预算支出
-![预算页](docs/screenshots/s-06-budget.png)
+![预算页](docs/screenshots/s-05-budget.png)
 
 预算设置 → 花销概览（渐变进度环）→ 分类统计 → 账单 CRUD → 历史预算方案 → AI 预算建议。
 
 ### ⑦ 行李清单（AI 生成 + AI 校验）
-![行李清单](docs/screenshots/s-07-packing.png)
+![行李清单](docs/screenshots/s-06-packing.png)
 
 按目的地/天数/出行方式生成，AI 检查缺失，标记已准备，分类汇总。
 
 ### ⑧ 榜单排行
-![榜单页](docs/screenshots/s-08-ranking.png)
+![榜单页](docs/screenshots/s-07-ranking.png)
 
 黑榜（避雷）/ 红榜（好评）/ 特色榜单，按城市切换，每张卡片配有真实实拍图。
 
 ### ⑨ 管理员审核后台
-![管理员审核](docs/screenshots/s-09-admin.png)
+![管理员审核](docs/screenshots/s-08-admin-review.png)
 
 多条件筛选（城市/类型/状态/时间/关键词）、批量通过/删除、单条审核详情。
 

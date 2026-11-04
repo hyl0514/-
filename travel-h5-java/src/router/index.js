@@ -18,7 +18,7 @@ const routes = [
     // 旧版移动端路由统一指向个人主页
     { path: '/home', redirect: '/profile-home' },
     { path: '/detail', redirect: '/profile-home' },
-    { path: '/chat', redirect: '/profile-home' },
+    { path: '/chat', name: 'Chat', component: () => import('../views/Chat.vue') },
     { path: '/profile', redirect: '/profile-home' }
 ]
 
