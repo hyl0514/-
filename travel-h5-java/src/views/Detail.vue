@@ -384,7 +384,7 @@ const fetchTripData = async () => {
     isLoading.value = true
     errorMsg.value = ''
     try {
-        const res = await post('recommend', {
+        const res = await post('travel/recommend', {
             city: formData.city,
             budget: formData.budget,
             days: formData.days
