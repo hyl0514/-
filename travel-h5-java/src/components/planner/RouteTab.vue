@@ -40,6 +40,34 @@
       </div>
     </div>
 
+    <!-- 生成进度 -->
+    <div class="gen-panel" v-if="isLoading.value">
+      <div class="gen-head">
+        <div class="gen-stage">
+          <span class="gen-dot"></span>
+          <span>{{ stageText }}</span>
+        </div>
+        <span class="gen-time">{{ elapsed }}s</span>
+      </div>
+      <div class="gen-bar">
+        <div class="gen-bar-fill" :style="{ width: progress + '%' }"></div>
+      </div>
+      <div class="gen-tip">AI 一次生成 2-3 套方案，通常需要 30-60 秒，请勿重复提交</div>
+      <div class="gen-slow" v-if="showSlowHint">
+        <span>已超过 60 秒，仍在生成中，可继续等待或重新生成</span>
+        <button class="pc-btn pc-btn-sm" @click="retryGenerate">重新生成</button>
+      </div>
+    </div>
+
+    <!-- 失败提示 -->
+    <div class="gen-panel gen-error" v-if="!isLoading.value && errorText">
+      <div class="gen-error-title">路线生成失败</div>
+      <div class="gen-error-reason">{{ errorText }}</div>
+      <div class="gen-error-action">
+        <button class="pc-btn pc-btn-sm pc-btn-primary" @click="retryGenerate">重试</button>
+      </div>
+    </div>
+
     <!-- 路线方案列表 -->
     <div class="plan-list" v-if="state.routes.length">
       <div class="list-head">
@@ -97,7 +125,7 @@
     </div>
 
     <!-- 空提示 -->
-    <div class="route-empty" v-else-if="!isLoading">
+    <div class="route-empty" v-else-if="!isLoading.value && !errorText">
       <div class="r-empty-icon">🧭</div>
       <p>填写目的地与天数，AI 将一次生成 2-3 套风格不同的路线供比选</p>
     </div>
@@ -105,7 +133,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref, onUnmounted } from 'vue'
 import { useTripStore } from '../../store/tripStore'
 import { useFavoriteStore } from '../../store/favoriteStore'
 import { generateRoutes } from '../../utils/routeApi'
@@ -125,6 +153,16 @@ const local = reactive({
 const preferences = ['休闲', '美食', '小众打卡']
 const isLoading = reactive({ value: false })
 
+// 生成进度：阶段文案 + 进度条 + 超时提示
+const elapsed = ref(0)
+const progress = ref(0)
+const stageText = ref('')
+const showSlowHint = ref(false)
+const errorText = ref('')
+let timer = null
+let controller = null
+let seq = 0
+
 const cities = [
     '北京', '上海', '广州', '深圳', '成都', '杭州', '西安', '重庆',
     '南京', '武汉', '苏州', '长沙', '青岛', '厦门', '昆明', '三亚', '丽江', '大理'
@@ -137,7 +175,43 @@ const syncFormToStore = () => {
     state.form.preference = local.preference
 }
 
+const stageFor = (s) => {
+    if (s < 8) return '正在理解你的出行偏好…'
+    if (s < 20) return '正在检索目的地热门点位…'
+    if (s < 40) return '正在规划每日动线与多套方案…'
+    if (s < 60) return '正在核算预算并整理方案细节…'
+    return 'AI 仍在生成，马上就好…'
+}
+
+const startTimer = () => {
+    elapsed.value = 0
+    progress.value = 5
+    stageText.value = stageFor(0)
+    showSlowHint.value = false
+    clearInterval(timer)
+    timer = setInterval(() => {
+        elapsed.value += 1
+        progress.value = Math.min(95, Math.round(95 * (1 - Math.exp(-elapsed.value / 22))))
+        stageText.value = stageFor(elapsed.value)
+        if (elapsed.value >= 60) showSlowHint.value = true
+    }, 1000)
+}
+
+const stopTimer = () => {
+    clearInterval(timer)
+    timer = null
+}
+
+const describeError = (e) => {
+    if (e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError') return null
+    if (!e?.response && (e?.code === 'ERR_NETWORK' || e?.message === 'Network Error')) {
+        return '无法连接后端服务（网络异常或服务未启动），请确认后端启动后重试'
+    }
+    return e?.message || '未知错误'
+}
+
 const onGenerate = async () => {
+    if (isLoading.value) return
     if (!local.destination) { toast.error('请填写目的地'); return }
     if (!local.travelDays || local.travelDays < 1 || local.travelDays > 30) {
         toast.error('出行天数需在 1-30 之间')
@@ -145,23 +219,54 @@ const onGenerate = async () => {
     }
 
     syncFormToStore()
+
+    const my = ++seq
+    errorText.value = ''
     isLoading.value = true
+    controller = new AbortController()
+    startTimer()
+
     try {
         const data = await generateRoutes({
             origin: local.origin,
             destination: local.destination,
             travelDays: Number(local.travelDays),
             preference: local.preference
-        })
+        }, { signal: controller.signal })
+
+        if (!data || !Array.isArray(data.routeList) || !data.routeList.length) {
+            throw new Error('AI 未返回有效路线，可重试')
+        }
         setRoutes(data.routeList)
         toast.success(`已生成 ${data.routeList.length} 套路线并自动保存到我的行程`)
     } catch (e) {
-        console.error(e)
-        toast.error('路线生成失败，请确认后端服务已启动')
+        const reason = describeError(e)
+        if (reason && my === seq) {
+            console.error(e)
+            errorText.value = reason
+        }
     } finally {
-        isLoading.value = false
+        // 只有最后一次请求可以清理状态，避免「重新生成」时被旧请求覆盖
+        if (my === seq) {
+            stopTimer()
+            isLoading.value = false
+            controller = null
+        }
     }
 }
+
+const retryGenerate = () => {
+    if (controller) controller.abort()
+    controller = null
+    stopTimer()
+    isLoading.value = false
+    onGenerate()
+}
+
+onUnmounted(() => {
+    if (controller) controller.abort()
+    stopTimer()
+})
 
 const onSelect = (i) => {
     selectRoute(i)
@@ -247,6 +352,117 @@ const favAllRoutes = () => {
 
 .form-action {
     margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 生成进度 */
+.gen-panel {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+}
+
+.gen-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.gen-stage {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-1);
+}
+
+.gen-stage span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gen-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--brand);
+    flex-shrink: 0;
+    animation: genPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes genPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+.gen-time {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+}
+
+.gen-bar {
+    margin-top: 12px;
+    height: 8px;
+    border-radius: 99px;
+    background: #eef2f7;
+    overflow: hidden;
+}
+
+.gen-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #2374DD, #4a90e8);
+    transition: width 0.9s linear;
+}
+
+.gen-tip {
+    margin-top: 9px;
+    font-size: 12.5px;
+    color: var(--text-3);
+}
+
+.gen-slow {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12.5px;
+    color: #b26a00;
+}
+
+.gen-error {
+    border-color: #f5c2c2;
+    background: #fff7f7;
+}
+
+.gen-error-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #c0392b;
+}
+
+.gen-error-reason {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #8a4b4b;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.gen-error-action {
+    margin-top: 12px;
     display: flex;
     justify-content: flex-end;
 }

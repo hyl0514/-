@@ -17,7 +17,7 @@
       <div class="bubble-content">
         <div class="message-text" v-if="message.role === 'user'">{{ message.content }}</div>
         <div class="message-text ai-message" v-else>
-          <template v-if="message.content">{{ message.content }}</template>
+          <template v-if="message.content">{{ message.content }}<span v-if="streaming" class="typing-cursor"></span></template>
           <template v-else>
             <span class="typing-cursor"></span>
           </template>
@@ -49,6 +49,10 @@ const props = defineProps({
   message: {
     type: Object,
     required: true
+  },
+  streaming: {
+    type: Boolean,
+    default: false
   }
 })
 

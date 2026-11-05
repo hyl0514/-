@@ -108,12 +108,13 @@
                     v-for="(msg, index) in messages" 
                     :key="msg.id" 
                     :message="msg"
+                    :streaming="msg.status === 'loading'"
                     :class="{ 'message-enter': true }"
                     :style="{ animationDelay: `${index * 0.05}s` }"
                 />
                 
-                <!-- 正在输入指示器 -->
-                <div class="streaming-indicator" v-if="isStreaming">
+                <!-- 正在输入指示器：仅在首段文字到达前显示 -->
+                <div class="streaming-indicator" v-if="isStreaming && !hasFirstChunk">
                     <div class="streaming-avatar">🤖</div>
                     <div class="streaming-content">
                         <div class="typing-dots">
@@ -299,6 +300,7 @@ const fetchAIResponse = (userMsg) => {
     cancelCurrentRequest()
     
     isStreaming.value = true
+    hasFirstChunk.value = false
     
     // 随机切换提示文字
     let textIndex = 0
@@ -323,6 +325,7 @@ const fetchAIResponse = (userMsg) => {
         sessionKey: chatSessionKey,
         sessionTitle: userMsg.slice(0, 20)
     }, (chunk) => {
+        hasFirstChunk.value = true
         fullResponse += chunk
         const lastMsg =  messages.value[messages.value.length - 1]
         if (lastMsg && lastMsg.role === 'ai') {
@@ -355,6 +358,7 @@ const fetchAIResponse = (userMsg) => {
 }
 
 const isStreaming = ref(false)
+const hasFirstChunk = ref(false)
 
 const addUserMessage = (content) => {
     messages.value.push({

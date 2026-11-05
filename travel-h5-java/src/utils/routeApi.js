@@ -8,6 +8,6 @@ import { post } from './request'
  * @param {number} data.travelDays 出行天数
  * @param {string} data.preference 出行偏好：休闲 / 美食 / 小众打卡
  */
-export function generateRoutes(data) {
-    return post('travel/routes/generate', data)
+export function generateRoutes(data, config) {
+    return post('travel/routes/generate', data, config)
 }

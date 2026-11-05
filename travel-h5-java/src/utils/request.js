@@ -46,7 +46,7 @@ request.interceptors.response.use(
     }
 )
 
-export function post(url, data) { return request.post(url, data) }
+export function post(url, data, config) { return request.post(url, data, config) }
 export function get(url, params) { return request.get(url, { params }) }
 export function del(url) { return request.delete(url) }
 export function put(url, data) { return request.put(url, data) }
@@ -67,21 +67,28 @@ export function fetchStream(url, data, onChunk, onComplete, onError) {
             if (!response.ok) throw new Error(`HTTP ${response.status}`)
             const reader = response.body.getReader()
             const decoder = new TextDecoder()
+            // 缓存跨 chunk 的未完整行，避免 JSON 被切断后丢字
+            let buffer = ''
+            const handleLine = (raw) => {
+                const line = raw.trim()
+                if (!line.startsWith('data:')) return
+                try {
+                    const j = JSON.parse(line.substring(5).trim())
+                    if (j.type === 'chunk') onChunk(j.content)
+                    else if (j.done) onComplete()
+                    else if (j.error) onError(j.error)
+                } catch {}
+            }
             while (true) {
                 const { done, value } = await reader.read()
                 if (done) break
-                const chunk = decoder.decode(value, { stream: true })
-                for (const line of chunk.split('\n').filter(l => l.trim())) {
-                    try {
-                        if (line.startsWith('data:')) {
-                            const j = JSON.parse(line.substring(5))
-                            if (j.type === 'chunk') onChunk(j.content)
-                            else if (j.done) onComplete()
-                            else if (j.error) onError(j.error)
-                        }
-                    } catch {}
-                }
+                buffer += decoder.decode(value, { stream: true })
+                const lines = buffer.split('\n')
+                buffer = lines.pop() // 最后一段可能不完整，留到下次
+                for (const line of lines) handleLine(line)
             }
+            buffer += decoder.decode()
+            handleLine(buffer)
         } catch (e) { if (e.name !== 'AbortError') onError(e.message) }
     }
     start()
