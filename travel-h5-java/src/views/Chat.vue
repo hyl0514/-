@@ -999,6 +999,7 @@ onMounted(() => {
   .quick-questions { padding: 14px; }
   .tag-wrap { flex-wrap: wrap; }
   .chat-input-area { padding: 10px 12px; }
+  .custom-nav :deep(.van-nav-bar__right) { padding-right: 20px; }
 }
 @media (max-width: 760px) {
   .chat-input-area { left: 64px; bottom: 8px; }
