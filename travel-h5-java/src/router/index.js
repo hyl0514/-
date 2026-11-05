@@ -7,6 +7,7 @@ const routes = [
     { path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
     { path: '/', redirect: '/profile-home' },
     { path: '/profile-home', name: 'ProfileHome', component: () => import('../views/ProfileHome.vue') },
+    { path: '/achievements', name: 'Achievements', component: () => import('../views/Achievements.vue') },
     { path: '/planner', name: 'TripPlanner', component: () => import('../views/TripPlanner.vue') },
     { path: '/packing', name: 'PackingList', component: () => import('../views/PackingList.vue') },
     { path: '/ranking', name: 'Ranking', component: () => import('../views/Ranking.vue') },

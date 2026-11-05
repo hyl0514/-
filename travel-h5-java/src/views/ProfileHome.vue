@@ -48,6 +48,18 @@
     <!-- 快捷六宫格 -->
     <QuickNav />
 
+    <!-- 成就与挑战入口 -->
+    <section class="ph-ach-bar" @click="$router.push('/achievements')">
+      <div class="pab-left">
+        <div class="pab-icon">🏆</div>
+        <div>
+          <div class="pab-title">旅行成就与预算挑战</div>
+          <div class="pab-sub">已解锁 {{ achUnlocked }} / {{ achTotal }} 枚徽章 · {{ achFromLocal ? '当前为本地数据' : '已同步至账号' }}</div>
+        </div>
+      </div>
+      <span class="pab-go">查看成就 →</span>
+    </section>
+
     <!-- 主内容栅格：左主右副 -->
     <div class="ph-main">
       <!-- 左主列 -->
@@ -361,6 +373,7 @@ import { useExpenseStore } from '../store/expenseStore'
 import { useTripStore } from '../store/tripStore'
 import { useAuthStore } from '../store/authStore'
 import { useCommunityStore } from '../store/communityStore'
+import { useAchievementData, syncAchievementsToServer } from '../utils/achievementUtils'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -368,6 +381,18 @@ const fav = useFavoriteStore()
 const exp = useExpenseStore()
 const trip = useTripStore()
 const comm = useCommunityStore()
+const { unlockedCount: localAchUnlocked, totalBadges: achTotal } = useAchievementData()
+
+// 成就入口优先展示服务端数据；接口不可用时回退本地计算
+const serverAchUnlocked = ref(null)
+const achFromLocal = computed(() => serverAchUnlocked.value === null)
+const achUnlocked = computed(() =>
+  serverAchUnlocked.value !== null ? serverAchUnlocked.value : localAchUnlocked.value)
+
+const syncAch = async () => {
+  const r = await syncAchievementsToServer()
+  if (r.ok) serverAchUnlocked.value = r.unlockedCount
+}
 
 // 图片源：picsum.photos（同 seed 返回同图，稳定且国内可访问）
 // 旧 trae 文生图 API 已下线（404），改用 picsum + 渐变蒙版统一风格
@@ -521,6 +546,7 @@ onMounted(() => {
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
   })
   document.querySelector('.profile-home')?.scrollTo?.(0, 0)
+  syncAch()
 })
 onUnmounted(() => { if (observer) observer.disconnect() })
 </script>
@@ -779,9 +805,44 @@ onUnmounted(() => { if (observer) observer.disconnect() })
 .pfc-switch::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
 .pfc-switch.on::after { left: 18px; }
 
+/* ===== 成就入口条 ===== */
+.ph-ach-bar {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 22px;
+    border-radius: 14px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #fff8ec 0%, #fef2f2 100%);
+    border: 1px solid #f6e4c8;
+    box-shadow: 0 4px 16px rgba(232, 145, 47, 0.08);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
+}
+.ph-ach-bar:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(232, 145, 47, 0.16); }
+.pab-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.pab-icon {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, #E8912F, #e94560);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; box-shadow: 0 4px 12px rgba(232, 145, 47, 0.35);
+}
+.pab-title { font-size: 15px; font-weight: 700; color: #1a2a4a; }
+.pab-sub { font-size: 12px; color: #8a6d3b; margin-top: 4px; }
+.pab-go { font-size: 13px; font-weight: 600; color: #E8912F; white-space: nowrap; }
+
 /* 响应式 */
 @media (max-width: 1280px) {
     .ph-main { grid-template-columns: 1fr; }
     .cm-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+    .profile-home { padding: 0 14px 20px; }
+    .ph-ach-bar { padding: 12px 14px; flex-wrap: wrap; }
+    .pab-go { width: 100%; text-align: right; }
+    .cm-grid { grid-template-columns: 1fr; }
 }
 </style>

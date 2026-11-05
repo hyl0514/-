@@ -18,6 +18,7 @@ import { getSavingAdvice, getReviewReport } from '../utils/budgetApi'
 import { generatePackingList, checkPackingMissing } from '../utils/packingApi'
 import { addFavorite, removeFavorite, checkFavorite, getFavoriteList, getFavoriteCount } from '../utils/favoriteApi'
 import { getWeather, getHotWeather, getWeatherList } from '../utils/weatherApi'
+import { achievementApi } from '../utils/achievementApi'
 
 /* ======================= 1. 认证 / 用户 =======================
  * 表：t_user(id, username, password_hash, role, nickname, avatar, sign, origin, budget, interests, created_at)
@@ -148,6 +149,14 @@ export const weatherApi = {
     list: (cities) => getWeatherList(cities)
 }
 
+/* ======================= 10. 成就与挑战 =======================
+ * 表：user_badges(user_id, badge_key, unlocked_at)  唯一 user_id + badge_key
+ * 表：user_challenges(user_id, challenge_key, status, progress, win_count, joined_at, completed_at)
+ *     唯一 user_id + challenge_key
+ * 徽章与挑战的解锁判定由前端按真实数据计算，再通过本组接口幂等写入服务端
+ */
+export { achievementApi }
+
 export default {
     authApi,
     postApi,
@@ -157,5 +166,6 @@ export default {
     favoriteApi,
     rankApi,
     aiApi,
-    weatherApi
+    weatherApi,
+    achievementApi
 }

@@ -7,6 +7,7 @@
 import { reactive } from 'vue'
 import { setToken, clearToken } from '../utils/request'
 import { authApi } from '../api'
+import { claimLocalDataOwner } from '../utils/localDataOwner'
 
 const STORAGE_KEY = 'pc-auth-v1'
 
@@ -85,6 +86,7 @@ const login = async (username, password) => {
         if (data && data.user) {
             setToken(data.token)
             applyAccount(user, { ...data.user }, true)
+            claimLocalDataOwner(user)
             return { ok: true, msg: `✅ 登录成功（后端）` }
         }
     } catch (e) {
@@ -92,6 +94,7 @@ const login = async (username, password) => {
         const acc = ACCOUNTS[user]
         if (acc && acc.password === pwd) {
             applyAccount(user, acc, false)
+            claimLocalDataOwner(user)
             return { ok: true, msg: `🔌 后端未启用，已切换本地账号` }
         }
         return { ok: false, msg: e?.message || '账号或密码错误' }
@@ -102,6 +105,7 @@ const login = async (username, password) => {
     if (!acc) return { ok: false, msg: '账号不存在' }
     if (acc.password !== pwd) return { ok: false, msg: '密码错误' }
     applyAccount(user, acc, false)
+    claimLocalDataOwner(user)
     return { ok: true, msg: '🔌 后端未启用，已切换本地账号' }
 }
 
