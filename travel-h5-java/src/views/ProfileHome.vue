@@ -844,5 +844,10 @@ onUnmounted(() => { if (observer) observer.disconnect() })
     .ph-ach-bar { padding: 12px 14px; flex-wrap: wrap; }
     .pab-go { width: 100%; text-align: right; }
     .cm-grid { grid-template-columns: 1fr; }
+    .ph-main { grid-template-columns: minmax(0, 1fr); }
+    .ph-col-main, .ph-col-side, .ph-card, .ph-card-head, .ph-head-actions, .trip-scroll { min-width: 0; }
+    .ph-head-actions { flex-wrap: wrap; gap: 8px; }
+    .ph-head-actions .ph-btn { min-height: 40px; }
+    .trip-scroll { max-width: 100%; }
 }
 </style>

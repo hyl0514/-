@@ -852,4 +852,20 @@ function resetAll() {
         font-size: 10.5px; color: #7d95ad; text-align: center;
     }
 }
+
+@media (max-width: 900px) {
+    .list-wrap {
+        grid-template-columns: minmax(0, 1fr);
+        max-height: none;
+        padding-right: 0;
+    }
+    .cl-card, .cl-row { min-width: 0; }
+    .it-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .it-del { width: 40px; height: 40px; opacity: 1; }
+}
 </style>

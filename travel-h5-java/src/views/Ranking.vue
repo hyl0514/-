@@ -981,5 +981,15 @@ const startCompare = () => {
     .board-head { flex-wrap: wrap; gap: 8px; }
     .detail-modal, .compare-modal { width: calc(100vw - 24px); max-width: calc(100vw - 24px); }
     .dm-img { height: 180px; }
+    .rank-page { padding-bottom: 170px; }
+    .float-bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; }
+    .fb-selected { flex-wrap: wrap; gap: 6px; overflow: visible; }
+    .fb-hint { white-space: normal; font-size: 11.5px; }
+    .fb-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+    .fb-actions .pc-btn { flex: 1 1 45%; min-height: 44px; justify-content: center; padding: 0 8px; }
+    .fb-actions .pc-btn-primary { flex-basis: 100%; }
+}
+@media (max-width: 760px) {
+    .float-bar { left: 64px; }
 }
 </style>
