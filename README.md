@@ -33,6 +33,8 @@
 | 👥 | **社区旅友空间** | 两列瀑布流 · 骨架屏 · 点赞收藏 · 管理员审核 · 待审核角标提示 |
 | 🛡️ | **管理员审核后台** | 多条件筛选 + 批量通过/驳回 + 单条审核详情 + 精准内容管控 |
 | 🏆 | **城市榜单** | 黑榜（避雷）/ 红榜（好评）/ 特色榜单，按城市切换，真实实拍图 |
+| 🆕 | **注册入口** | 登录页「登录 / 注册」页签切换；用户名校验、两次密码一致、重复用户名提示；注册成功自动登录，新账号发布内容仍走审核 |
+| 🏅 | **成就与挑战** | 12 枚徽章 + 6 个预算挑战；入口在个人主页与侧栏；解锁结果按真实数据计算后写入 `user_badges` / `user_challenges`，换设备或清缓存后仍保留 |
 
 ---
 
@@ -238,14 +240,14 @@ SSE 对话、预算建议、行李清单、POI 推荐同理，均在 AI 返回�
 
 | 层 | 技术 | 版本 |
 |----|------|------|
-| 前端框架 | Vue 3 + `<script setup>` + Composition API | 3.x |
-| 前端构建 | Vite | 8.x |
-| UI 组件 | Vant 4 | 4.x |
-| 状态管理 | Pinia | 2.x |
-| 路由 | Vue Router | 4.x |
-| HTTP | Axios + 拦截器（JWT 自动注入） | 1.x |
+| 前端框架 | Vue 3 + `<script setup>` + Composition API | 3.5.32 |
+| 前端构建 | Vite | 8.0.10 |
+| UI 组件 | Vant 4 + Element Plus | 4.9.24 / 2.14.7 |
+| 状态管理 | 自研 `reactive` Store（`src/store`，无 Pinia 依赖） | - |
+| 路由 | Vue Router | 4.3 |
+| HTTP | Axios + 拦截器（JWT 自动注入） | 1.15.2 |
 | 地图 | 高德地图 JS API 2.0（按需注入，Key 可降级） | 2.0 |
-| 后端框架 | Spring Boot | 4.0.6 |
+| 后端框架 | Spring Boot（JDK 17） | 4.0.6 |
 | ORM | MyBatis-Plus | 3.5.7 |
 | 鉴权 | JWT（jjwt）+ 拦截器 + @CurrentUser 参数解析器 | - |
 | 大模型 | DeepSeek-V3（经硅基流动中转） | deepseek-ai/DeepSeek-V3 |
@@ -282,7 +284,7 @@ cd smart-travel-plan-budget
 mysql -uroot -p < travel_h5_schema.sql
 ```
 
-脚本自动创建 `travel_h5` 数据库、14 张表、种子账号与种子数据。
+脚本自动创建 `travel_h5` 数据库、19 张表（含 `user_badges` / `user_challenges`）、种子账号与种子数据。
 
 **演示账号：**
 
@@ -344,9 +346,9 @@ smart-travel-plan-budget/
 │   │   ├── components/
 │   │   │   ├── community/               # 社区组件（Card / Filter / Sidebar / Hero / PublishModal）
 │   │   │   └── planner/                 # 行程规划组件（RouteTab / MapPanel / PointCard）
-│   │   ├── store/                        # Pinia Store（auth / community / trip / budget / favorite）
+│   │   ├── store/                        # 自研 reactive Store（auth / community / trip / budget / favorite / gamification）
 │   │   ├── utils/                        # API 封装 + Axios + 高德（routeApi / poiApi / budgetApi / packingApi / amapApi / request）
-│   │   ├── views/                        # 11 个页面（Login / ProfileHome / TripPlanner / Chat / CommunitySpace / Budget / PackingList / Ranking / AdminReview ...）
+│   │   ├── views/                        # 15 个页面（Login / Register 页签 / ProfileHome / Achievements / TripPlanner / Chat / CommunitySpace / Budget / PackingList / Ranking / AdminReview ...）
 │   │   └── router/index.js               # 路由 + 守卫（adminOnly / authOnly）
 │   ├── .env.example                      # 环境变量模板
 │   ├── vite.config.js                    # Vite 配置（代理 / 端口 / 别名）
@@ -364,36 +366,97 @@ smart-travel-plan-budget/
 │       ├── config/                       # WebConfig / CorsConfig / MybatisPlusConfig
 │       └── utils/                        # LLMutils（DeepSeek 调用）/ JsonExtractUtil / JwtUtil
 │
-├── travel_h5_schema.sql                  # MySQL 初始化（14 表 + 种子 + DDL 注释）
+├── travel_h5_schema.sql                  # MySQL 初始化（19 表 + 种子 + DDL 注释）
 ├── rank_seeds.sql                        # 榜单种子数据
 ├── seed_data.sql                         # 补充种子数据
-├── docs/screenshots/                     # README 配图（10 张真实截图）
+├── docs/screenshots/                     # README 配图（9 张桌面演示图 + 12 张 390×844 页面图）
 ├── README.md
 └── .gitignore
 ```
 
 ---
 
-## 🗄️ 数据库设计（14 张表）
+## 🧩 功能模块与页面截图
+
+> 以下为 **390×844 移动端视口**下真实运行系统的截图（分别登录 traveler / admin 实拍）。桌面尺寸演示大图见上方「功能演示」。
+
+### 1. 登录与注册
+- 登录：账号密码校验，错误账号有明确提示，成功后跳转个人主页；退出登录会清除 token 与本地会话。
+- 注册：登录页顶部「注册」页签，用户名 3-20 位、密码 6-20 位、两次密码一致；重复用户名等后端错误会原样提示；注册成功自动登录。新账号发布的社区内容仍进入待审核队列。
+
+![登录页](docs/screenshots/login.png)
+![注册页](docs/screenshots/register.png)
+
+### 2. 个人主页 `/profile-home`
+头像 / 昵称 / 个性签名、行程数 · 打包方案 · 收藏数 · 发布作品统计卡片、六个快捷入口，以及「旅行成就与预算挑战」入口条（显示已同步至账号或本地数据）。
+
+![个人主页](docs/screenshots/profile-home.png)
+
+### 3. 行程规划 `/planner`
+高德地图按需注入（Key 无效时展示「地图未启用」并降级），AI 一次生成多套多日路线，点位按天渲染。
+
+![行程规划](docs/screenshots/planner.png)
+
+### 4. AI 智能问答与行程生成 `/chat`
+SSE 流式问答，按 `sessionKey` 归组会话，每轮 user + assistant 消息完整落库。
+
+![AI 问答](docs/screenshots/ai-chat.png)
+
+### 5. 旅友社区与内容审核 `/community`
+社区广场 / 我的动态切换、分类筛选、搜索、发布弹窗；普通用户发布后状态为「待审核」，管理员发布即通过。
+
+![社区列表](docs/screenshots/community.png)
+![发布弹窗](docs/screenshots/community-publish.png)
+
+### 6. 榜单与 POI 推荐 `/ranking`
+酒店 / 美食 / 景点三类榜单并列，红榜 / 黑榜切换，按城市查询，卡片配真实场所图与 AI 口碑摘要。
+
+![榜单](docs/screenshots/ranking.png)
+
+### 7. 行李清单 `/packing`
+按目的地 / 天数 / 出行方式生成四大类清单，分类卡片独立滚动，可勾选已准备。
+
+![行李清单](docs/screenshots/packing.png)
+
+### 8. 预算与账单 `/budget`
+预算录入 → 花费概览进度环 → 分类统计 → 账单 CRUD → 历史方案与 AI 预算建议。
+
+![预算支出](docs/screenshots/budget.png)
+
+### 9. 成就与挑战 `/achievements`
+12 枚徽章 + 6 个预算挑战，**服务端数据优先**：`GET /api/achievements/me` 读取已解锁徽章与挑战进度，前端按真实行程 / 账本 / 作品计算解锁后幂等写回；接口不可用时回退本地计算并在页面提示「当前为本地数据」。
+
+![成就与挑战](docs/screenshots/achievements.png)
+
+### 10. 管理员审核 `/admin`
+多条件筛选、批量通过 / 删除、单条审核详情；路由守卫 `adminOnly` 限制非管理员访问。
+
+![管理员审核](docs/screenshots/admin-review.png)
+
+---
+
+## 🗄️ 数据库设计（19 张表）
 
 ### 用户 & 鉴权
-- `t_user` — 用户（username unique, password MD5, role admin/user, status 1=正常）
+- `users` — 用户（username unique, role admin/user, status 1=正常）
+- `user_badges` — 用户已解锁徽章（user_id + badge_key 唯一，unlocked_at）
+- `user_challenges` — 用户挑战进度（user_id + challenge_key 唯一，status/progress/win_count/joined_at/completed_at）
 
 ### 社区旅友空间（审核制）
-- `t_post` — 帖子（author_id, status pending/approved/rejected, images JSON, perm public/private）
-- `t_comment` — 评论
-- `t_favorite` — 收藏
+- `community_posts` — 帖子（user_id, status pending/approved/rejected, images JSON）
+- `post_comments` — 评论
+- `favorites` — 收藏（多态 type + target_id）
 
 ### AI 自动落库（生成即保存）
-- `chat_session` — AI 对话会话（user_id, session_key unique, title）
-- `chat_message` — AI 对话消息（session_id, role user/assistant, content TEXT）
+- `chat_sessions` — AI 对话会话（user_id, session_key unique, title）
+- `chat_messages` — AI 对话消息（session_id, role user/assistant, content TEXT）
 - `poi_cache` — POI 推荐缓存（payload JSON）
-- `t_trip` → `trip_day_plan` → `trip_point` — 行程三级结构
-- `t_pack` → `pack_category` → `pack_item` — 行李三级结构
-- `t_expense_plan` — 预算方案（source ai/manual, ai_result JSON）
+- `trips` → `trip_day_plans` → `trip_points` — 行程三级结构
+- `packs` → `pack_categories` → `pack_items` — 行李三级结构
+- `expense_plans` / `expense_bills` — 预算方案与账单
 
 ### 榜单
-- `rank_item` — 榜单条目（type black/red/featured, city, score）
+- `rank_items` — 榜单条目（type black/red/featured, city, score）
 
 > 完整 DDL + 字段注释 + 外键约束见 [travel_h5_schema.sql](travel_h5_schema.sql)。
 
@@ -408,7 +471,7 @@ smart-travel-plan-budget/
 | 模块 | 方法 | 路径 | 说明 | 鉴权 |
 |------|------|------|------|------|
 | 认证 | POST | `/api/auth/login` | 登录，返回 token + 用户信息 | ❌ |
-| 认证 | POST | `/api/auth/register` | 注册 | ❌ |
+| 认证 | POST | `/api/auth/register` | 注册（前端显式传 `status:"1"`，成功后自动登录） | ❌ |
 | 用户 | GET | `/api/auth/me` | 当前用户资料 | ✅ |
 | 帖子 | GET | `/api/posts?status=approved` | 列表 | ✅ |
 | 帖子 | POST | `/api/posts` | 发布（普通用户 → pending） | ✅ |
@@ -424,6 +487,24 @@ smart-travel-plan-budget/
 | **POI** | POST | `/api/travel/poi/recommend` | AI POI 推荐（自动落库） | ✅ |
 | 行程 | GET | `/api/trips` | 我的行程列表 | ✅ |
 | 榜单 | GET | `/api/ranks?city=南昌&type=black` | 榜单 | ✅ |
+| **成就** | GET | `/api/achievements/me` | 我的徽章 + 挑战进度 + 胜场 | ✅ |
+| **成就** | POST | `/api/achievements/badges` | 批量写入已解锁徽章（幂等），body `{keys:["first_trip",...]}` | ✅ |
+| **成就** | POST | `/api/achievements/challenges/{key}/join` | 加入挑战（已加入则返回原记录） | ✅ |
+| **成就** | PUT | `/api/achievements/challenges/{key}/progress` | 写入/更新进度（upsert），body `{progress,status?}` | ✅ |
+| **成就** | POST | `/api/achievements/challenges/{key}/complete` | 完成挑战并累加胜场（仅首次 +1），body `{won}` | ✅ |
+
+成就接口返回结构：
+
+```json
+{
+  "badges": [{ "badgeKey": "first_trip", "unlockedAt": "2026-11-05T..." }],
+  "challenges": [{ "challengeKey": "c1", "status": "joined", "progress": 0,
+                   "winCount": 0, "joinedAt": "...", "completedAt": null }],
+  "wins": 0
+}
+```
+
+> 所有成就接口均走 `Authorization: Bearer <token>`，服务端只读写 token 对应用户的数据。
 
 ---
 
@@ -472,6 +553,16 @@ smart-travel-plan-budget/
 3. **持久化**（注入 `TravelPersistenceService`，新增一个 `saveXxx(userId, req, vo)` 方法）
 
 然后 Controller 注入 `@CurrentUser LoginUser`，加一个 `@PostMapping` 端点即可。前端对接：`src/api/index.js` 声明接口 + Store 消费。
+
+---
+
+## ⚠️ 已知限制与约定
+
+1. **两个徽章暂不可解锁**：「早起鸟儿」「月度旅行家」需要行程的出发 / 完成时间字段，当前 `trips` 表没有该字段，因此保持未解锁（不补假数据）。
+2. **成就持久化范围**：`user_badges` / `user_challenges` 以 `user_id` 隔离；前端按真实行程 / 账本 / 作品计算出解锁结果后幂等写入，重复调用不会产生重复记录。换浏览器或清缓存后数据仍在；后端不可用时回退本地计算，并在页面提示「当前为本地数据」。
+3. **注册 status 约定**：后端注册接口的 `status` 默认值保持原样（未改动）；前端注册请求显式传 `status:"1"`，保证新账号能正常登录。
+4. **外部依赖限制**：硅基流动额度耗尽时 AI 接口返回失败；高德 JS API Key 与 Web 服务 Key 需分别配置，缺失或无效时地图 / 地理编码自动降级。
+5. **窄屏适配**：个人主页、成就页、登录 / 注册在 390 宽度下无横向溢出；社区、榜单、预算、管理员审核目前是桌面优先栅格布局，390 视口下会挤压或裁切（对应截图为真实状态），如有需要可单独做窄屏适配。
 
 ---
 
