@@ -1005,4 +1005,11 @@ const formatDuration = (seconds) => {
     font-size: 12px;
     color: #666;
 }
+
+@media (max-width: 900px) {
+    .map-topbar { flex-wrap: wrap; row-gap: 8px; padding: 10px 12px; }
+    .map-title { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; font-size: 14px; }
+    .map-controls { margin-left: auto; }
+    .ctrl-btn { width: 44px; height: 44px; }
+}
 </style>

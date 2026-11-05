@@ -907,4 +907,43 @@ const onRemovePlan = (id) => {
   }
 }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 900px) {
+  .budget-page { padding: 14px 12px 90px; }
+  .bp-header { margin-bottom: 14px; }
+  .bp-top-row { grid-template-columns: 1fr; gap: 12px; }
+  .bp-card { padding: 16px; }
+  .big-budget-input { font-size: 34px; }
+  .save-plan-row { flex-wrap: wrap; gap: 8px; }
+  .plan-name-input { flex: 1 1 100%; width: 100%; }
+  .save-plan-btn { width: 100%; min-height: 44px; }
+  .bill-filters { flex-wrap: wrap; gap: 10px; }
+  .bf-item { min-height: 36px; display: inline-flex; align-items: center; }
+  .bt-th { display: none; }
+  .bt-row {
+    grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 12px;
+    border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px;
+  }
+  .bt-row:hover { padding-left: 12px; }
+  .col-purpose { grid-column: 1 / -1; }
+  .col-cat { grid-column: 1; }
+  .col-source { grid-column: 2; justify-self: end; }
+  .col-amount { grid-column: 1; font-size: 12px; color: var(--text-3); }
+  .col-amount::before { content: '预估 ¥'; }
+  .col-actual { grid-column: 2; justify-self: end; }
+  .col-actual::before { content: '实际 '; font-size: 12px; color: var(--text-3); }
+  .col-ops {
+    grid-column: 1 / -1; display: flex; gap: 8px;
+    border-top: 1px solid var(--divider); padding-top: 6px;
+  }
+  .op-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; }
+  .actual-input { width: 100px; height: 40px; }
+  .ht-th { display: none; }
+  .ht-row {
+    grid-template-columns: 1fr 1fr; gap: 6px 10px; padding: 12px;
+    border-bottom: none; border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px;
+  }
+  .hp-name { grid-column: 1 / -1; }
+  .ht-row .op-del { min-height: 44px; display: inline-flex; align-items: center; justify-self: end; }
+}
 </style>

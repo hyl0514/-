@@ -120,4 +120,10 @@ const { stats } = useCommunityStore()
     font-weight: 700;
     line-height: 1;
 }
+@media (max-width: 900px) {
+    .ch-content { flex-direction: column; align-items: stretch; gap: 16px; padding: 22px 16px; }
+    .ch-title { font-size: 19px; line-height: 1.4; }
+    .ch-data { gap: 14px; flex-wrap: wrap; }
+    .ch-publish { width: 100%; justify-content: center; min-height: 44px; }
+}
 </style>

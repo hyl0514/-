@@ -260,4 +260,7 @@ const activeUsers = [
     background: #f7f9fc;
     border-radius: 8px;
 }
+@media (max-width: 900px) {
+    .cs-wrap { width: 100%; position: static; max-height: none; overflow: visible; }
+}
 </style>

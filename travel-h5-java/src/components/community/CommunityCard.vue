@@ -377,4 +377,7 @@ const onDelete = () => {
 .cf-item:hover { color: var(--brand); }
 .cf-item.liked { color: #e94560; }
 .cf-item.faved { color: var(--brand); }
+@media (max-width: 900px) {
+    .ccard { min-width: 0; overflow: hidden; }
+}
 </style>

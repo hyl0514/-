@@ -392,4 +392,29 @@ const batchDelete = () => { if (confirm(`确认删除 ${selected.value.length} �
 .ap-btn.disabled { opacity: 0.5; cursor: not-allowed; }
 
 .ap-info { font-size: 12.5px; color: var(--text-2); }
+@media (max-width: 900px) {
+    .admin-page { padding: 12px; }
+    .filter-card { padding: 12px; }
+    .al-table { padding: 0; }
+    .af-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .al-head { flex-direction: column; align-items: stretch; gap: 10px; }
+    .al-ops { flex-wrap: wrap; gap: 8px; }
+    .al-ops .pc-btn { min-height: 44px; }
+    .al-select-all { min-height: 44px; }
+    .al-th { display: none; }
+    .al-row {
+        grid-template-columns: 26px 52px 1fr; column-gap: 10px; row-gap: 6px;
+        padding: 12px; border: 1px solid var(--border);
+        border-radius: 12px; margin-bottom: 10px; align-items: start;
+    }
+    .col-check { grid-row: 1 / 4; align-self: center; }
+    .col-img { grid-row: 1 / 4; }
+    .col-city, .col-cat, .col-date { display: none; }
+    .col-title { grid-column: 3; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+    .col-status { grid-column: 3; }
+    .col-ops { grid-column: 3; display: flex; flex-wrap: wrap; gap: 8px; }
+    .ao-btn { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; }
+    .al-pager { flex-wrap: wrap; gap: 10px; }
+    .ap-btn { min-height: 44px; display: inline-flex; align-items: center; }
+}
 </style>

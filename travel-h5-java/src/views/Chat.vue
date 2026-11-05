@@ -989,4 +989,21 @@ onMounted(() => {
 .animate-float {
     animation: float 3s ease-in-out infinite;
 }
+@media (max-width: 900px) {
+  .chat-container { padding: 12px; padding-bottom: 140px; }
+  .chat-empty { padding: 24px 8px; gap: 20px; }
+  .empty-main { width: 100%; max-width: 100%; }
+  .hero-avatar { font-size: 64px; }
+  .feature-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+  .feature-card { padding: 10px; }
+  .quick-questions { padding: 14px; }
+  .tag-wrap { flex-wrap: wrap; }
+  .chat-input-area { padding: 10px 12px; }
+}
+@media (max-width: 760px) {
+  .chat-input-area { left: 64px; bottom: 8px; }
+}
+@media (min-width: 761px) and (max-width: 900px) {
+  .chat-input-area { left: 224px; }
+}
 </style>

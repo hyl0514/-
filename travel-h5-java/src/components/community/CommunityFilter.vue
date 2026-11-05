@@ -258,4 +258,13 @@ const mineCount = computed(() => store.myPosts.value.length)
     line-height: 18px;
     text-align: center;
 }
+@media (max-width: 900px) {
+    .cf-wrap { padding: 12px; }
+    .cf-row { flex-direction: column; align-items: stretch; gap: 10px; }
+    .cf-right { width: 100%; }
+    .cc-search { flex: 1; width: auto; min-height: 44px; }
+    .cf-sort { flex: 1; width: auto; height: 44px; }
+    .cf-tab { min-height: 44px; display: inline-flex; align-items: center; }
+    .cf-hot { min-height: 40px; display: inline-flex; align-items: center; }
+}
 </style>

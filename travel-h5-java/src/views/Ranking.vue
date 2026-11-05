@@ -971,4 +971,15 @@ const startCompare = () => {
     color: var(--danger);
     font-size: 12.3px;
 }
+@media (max-width: 900px) {
+    .rank-page { padding: 14px 12px 90px; }
+    .search-card { flex-wrap: wrap; }
+    .search-card .pc-btn { min-height: 44px; }
+    .city-input { flex: 1 1 100%; }
+    .board-grid { grid-template-columns: 1fr; gap: 12px; }
+    .board-section { min-width: 0; padding: 12px; }
+    .board-head { flex-wrap: wrap; gap: 8px; }
+    .detail-modal, .compare-modal { width: calc(100vw - 24px); max-width: calc(100vw - 24px); }
+    .dm-img { height: 180px; }
+}
 </style>

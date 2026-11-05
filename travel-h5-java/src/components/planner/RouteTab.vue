@@ -406,4 +406,8 @@ const favAllRoutes = () => {
     font-size: 13.5px;
     color: var(--text-3);
 }
+@media (max-width: 900px) {
+    .form-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-item.wide { grid-column: 1 / -1; }
+}
 </style>

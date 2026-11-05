@@ -266,4 +266,13 @@ const activeTab = ref(0)
 .tabs-body::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, #b7bfca 0%, #9ca5b0 100%);
 }
+@media (max-width: 900px) {
+    .planner-page { padding: 12px; gap: 12px; overflow-y: auto; }
+    .planner-body { flex-direction: column; gap: 12px; min-height: auto; }
+    .map-col { width: 100%; min-width: 0; flex-shrink: 0; height: 360px; }
+    .tabs-col { width: 100%; min-height: 420px; }
+    .tabs-head { flex-direction: column; padding: 10px 12px 0; gap: 4px; }
+    .top-tab { width: 100%; min-height: 44px; padding: 10px 12px; justify-content: flex-start; white-space: nowrap; }
+    .top-tab.active::after { left: 12px; right: 12px; bottom: 0; }
+}
 </style>

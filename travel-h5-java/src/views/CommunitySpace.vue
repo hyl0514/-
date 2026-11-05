@@ -212,4 +212,11 @@ const onPosted = async (post) => {
     margin: 20px 0;
     font-size: 13px;
 }
+@media (max-width: 900px) {
+    .cs-home { padding: 12px; }
+    .cs-main { flex-direction: column; align-items: stretch; gap: 12px; }
+    .cs-waterfall { width: 100%; grid-template-columns: 1fr; }
+    .wf-col { grid-column: 1; width: 100%; min-width: 0; }
+    .ccard { min-width: 0; overflow: hidden; }
+}
 </style>
