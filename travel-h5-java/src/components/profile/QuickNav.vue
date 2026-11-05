@@ -146,4 +146,9 @@ const go = (item) => {
     color: #fff;
     box-shadow: 0 2px 6px rgba(233, 69, 96, 0.35);
 }
+
+@media (max-width: 760px) {
+    .qn-wrap { grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 8px 10px; }
+    .qn-icon { width: 46px; height: 46px; }
+}
 </style>

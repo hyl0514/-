@@ -120,7 +120,7 @@
       </div>
 
       <!-- ============ 模块3：清单折叠面板 ============ -->
-      <div class="list-wrap" v-if="items.length">
+      <div class="list-wrap">
         <div class="cl-card pc-card" v-for="g in groups" :key="g.name">
           <div class="cl-head" @click="g.open = !g.open">
             <span class="cl-ico" :style="{ background: g.bg, color: g.color }" v-html="g.icon"></span>
@@ -147,7 +147,7 @@
       </div>
 
       <!-- ============ 模块5：空状态 ============ -->
-      <div class="empty-state" v-else-if="!loading">
+      <div class="empty-state" v-if="!items.length && !loading && !form.destination">
         <svg class="es-suitcase" viewBox="0 0 200 160" fill="none">
           <rect class="es-body" x="55" y="52" width="90" height="72" rx="12" stroke="#2374DD" stroke-width="3"/>
           <path class="es-handle" d="M83 52 V42 a8 8 0 0 1 8-8 h18 a8 8 0 0 1 8 8 V52" stroke="#0EA5A4" stroke-width="3"/>
@@ -214,7 +214,8 @@
 </template>
 
 <script setup>
-import { reactive, computed, watch, ref } from 'vue'
+import { reactive, computed, watch, ref, onMounted } from 'vue'
+import { useTripStore } from '../store/tripStore'
 
 /* ================= 常量 ================= */
 const SEASONS = ['春季', '夏季', '秋季', '冬季']
@@ -252,6 +253,22 @@ try {
         Object.assign(form, saved.form || {})
     }
 } catch { /* 忽略坏缓存 */ }
+
+/* ================= 与行程自动联动 ================= */
+const trip = useTripStore()
+
+// 进入页面时若暂无清单，自动取行程规划页的目的地/天数（或“我的行程”最近一条）生成
+onMounted(() => {
+    if (items.value.length) return
+    const ctx = trip.state.form
+    const latest = trip.state.myTrips?.[0]
+    const rawDest = ctx.destination || latest?.destination || ''
+    const days = ctx.travelDays || latest?.days
+    if (!rawDest) return
+    form.destination = rawDest.split(/[·,，、/|-]/)[0].trim() || rawDest
+    if (days) form.travelDays = Number(days)
+    onGenerate()
+})
 
 /* ================= 计算属性 ================= */
 const packedCount = computed(() => items.value.filter(i => i.packed).length)

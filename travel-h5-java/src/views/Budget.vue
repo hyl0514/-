@@ -32,16 +32,16 @@
         <div class="card-label">花销概览</div>
         <div class="ov-item">
           <span class="ov-label">预估总花费</span>
-          <span class="ov-value gray">¥{{ exp.estimatedTotal }}</span>
+          <span class="ov-value gray">¥{{ exp.estimatedTotal.value }}</span>
         </div>
         <div class="ov-item">
           <span class="ov-label">实际已花费</span>
-          <span class="ov-value dark">¥{{ exp.actualTotal }}</span>
+          <span class="ov-value dark">¥{{ exp.actualTotal.value }}</span>
         </div>
         <div class="ov-item">
           <span class="ov-label">剩余可支配</span>
-          <span class="ov-value" :class="exp.isOverrun ? 'red' : 'green'">
-            {{ exp.isOverrun ? '-' : '' }}¥{{ Math.abs(exp.remaining) }}
+          <span class="ov-value" :class="exp.isOverrun.value ? 'red' : 'green'">
+            {{ exp.isOverrun.value ? '-' : '' }}¥{{ Math.abs(exp.remaining.value) }}
           </span>
         </div>
         <!-- 预算进度环 -->
@@ -64,16 +64,16 @@
             <circle class="ring-bg" cx="60" cy="60" r="50"/>
             <circle class="ring-fill" cx="60" cy="60" r="50"
               :stroke-dasharray="`${ringDash} 314`"
-              :class="exp.isOverrun ? 'ring-red' : exp.usagePercent >= 85 ? 'ring-orange' : 'ring-green'"/>
-            <text x="60" y="56" text-anchor="middle" class="ring-pct">{{ exp.usagePercent }}%</text>
+              :class="exp.isOverrun.value ? 'ring-red' : exp.usagePercent.value >= 85 ? 'ring-orange' : 'ring-green'"/>
+            <text x="60" y="56" text-anchor="middle" class="ring-pct">{{ exp.usagePercent.value }}%</text>
             <text x="60" y="72" text-anchor="middle" class="ring-label">已使用</text>
           </svg>
         </div>
         <!-- 预警 -->
-        <div class="warn-bar" :class="exp.isOverrun ? 'w-red' : exp.usagePercent >= 85 ? 'w-orange' : 'w-green'">
-          <template v-if="exp.isOverrun">⚠️ 已超预算 ¥{{ Math.abs(exp.remaining) }}，建议暂停非必要消费</template>
-          <template v-else-if="exp.usagePercent >= 85">💡 接近预算上限（{{ exp.usagePercent }}%），请量力而行</template>
-          <template v-else>✅ 预算使用合理（{{ exp.usagePercent }}%）</template>
+        <div class="warn-bar" :class="exp.isOverrun.value ? 'w-red' : exp.usagePercent.value >= 85 ? 'w-orange' : 'w-green'">
+          <template v-if="exp.isOverrun.value">⚠️ 已超预算 ¥{{ Math.abs(exp.remaining.value) }}，建议暂停非必要消费</template>
+          <template v-else-if="exp.usagePercent.value >= 85">💡 接近预算上限（{{ exp.usagePercent.value }}%），请量力而行</template>
+          <template v-else>✅ 预算使用合理（{{ exp.usagePercent.value }}%）</template>
         </div>
       </div>
     </div>
@@ -81,7 +81,7 @@
     <!-- 分类统计图表 -->
     <div class="bp-card bp-chart-card">
       <div class="card-label">分类统计</div>
-      <BudgetTable :data="categoryData" :total="exp.actualTotal" />
+      <BudgetTable :data="categoryData" :total="exp.actualTotal.value" />
     </div>
 
     <!-- 账单列表 -->
@@ -217,7 +217,7 @@ const trip = useTripStore()
 
 const planName = ref('')
 const ringDash = computed(() => {
-  const pct = Math.min(exp.usagePercent, 100)
+  const pct = Math.min(exp.usagePercent.value, 100)
   return Math.round((pct / 100) * 314)
 })
 

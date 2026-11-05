@@ -313,4 +313,15 @@ const onSave = () => {
 .pp-interest.active { background: var(--brand); color: #fff; }
 
 .pp-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px; border-top: 1px solid var(--divider); background: #fafbfd; }
+
+@media (max-width: 760px) {
+    .pb-content { flex-direction: column; align-items: stretch; padding: 18px 16px; gap: 16px; }
+    .pb-user { gap: 14px; }
+    .avatar-wrap { width: 64px; height: 64px; }
+    .pb-name { font-size: 18px; flex-wrap: wrap; gap: 6px; }
+    .pb-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-card { width: auto; padding: 12px 10px; }
+    .pb-3d-compass, .pb-3d-globe, .pb-3d-map { display: none; }
+    .pp-modal { width: calc(100vw - 32px); }
+}
 </style>

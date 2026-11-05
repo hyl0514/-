@@ -21,6 +21,7 @@
         :key="item.path"
         class="nav-item"
         :class="{ active: isActive(item.path) }"
+        :title="item.label"
         @click="go(item.path)"
       >
         <span class="nav-indicator"></span>
@@ -87,6 +88,11 @@ const menus = [
         path: '/favorites',
         label: '个人收藏',
         icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 7h6M9 10h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`
+    },
+    {
+        path: '/achievements',
+        label: '成就挑战',
+        icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.9 2.5M17 6h2.5a2.5 2.5 0 0 1-2.9 2.5M12 14v4M8.5 20.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`
     },
     {
         path: '/community',
@@ -261,4 +267,17 @@ const go = (path) => {
 
 .nav-footer:hover .user-logout { opacity: 0.7; }
 .user-logout:hover { opacity: 1 !important; background: #fde7ea; }
+
+/* 窄屏收成图标导航，避免侧栏挤占内容导致横向溢出 */
+@media (max-width: 760px) {
+    .side-nav { width: 64px; }
+    .brand { padding: 16px 10px; justify-content: center; }
+    .brand-text { display: none; }
+    .nav-menu { padding: 8px 6px; }
+    .nav-item { justify-content: center; padding: 0; }
+    .nav-label { display: none; }
+    .nav-footer { margin: 8px 8px 14px; padding: 10px; justify-content: center; gap: 0; }
+    .user-info { display: none; }
+    .user-logout { opacity: 0.75; font-size: 14px; padding: 2px 4px; }
+}
 </style>
