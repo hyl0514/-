@@ -55,12 +55,12 @@
 ### ③ 行程规划（AI 生成 + 自动保存）
 ![行程规划](docs/screenshots/s-03-planner.png)
 
-输入目的地、天数、偏好，AI 一次生成 2~3 套完整多日路线（每套都真实落库返回 tripId）。
+输入目的地、天数、偏好，AI 一次生成 2~3 套完整多日路线（每套都真实落库返回 tripId）。生成期间展示阶段文案、进度条与耗时；超过 60 秒提供「继续等待 / 重新生成」；同一用户相同参数 10 分钟内直接复用服务端缓存结果。
 
 ### ④ AI 智能问答（SSE 流式）
 ![AI 对话](docs/screenshots/s-09-ai-chat.png)
 
-按 `sessionKey` 自动归组对话，每轮 user + assistant 消息完整写入 `chat_sessions / chat_messages`。
+按 `sessionKey` 自动归组对话，每轮 user + assistant 消息完整写入 `chat_sessions / chat_messages`。回答按上游 token 增量渲染，首段到达即可阅读。
 
 ### ⑤ 旅友空间（社区）
 ![社区广场](docs/screenshots/s-04-community.png)
