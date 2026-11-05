@@ -297,6 +297,36 @@ CREATE TABLE poi_cache (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 沿途场所推荐缓存';
 
 
+-- -------------------- 10. 成就徽章与挑战赛 --------------------
+-- 只做增量建表：已存在的表不会被删除或覆盖
+CREATE TABLE IF NOT EXISTS user_badges (
+  id          BIGINT       NOT NULL AUTO_INCREMENT,
+  user_id     BIGINT       NOT NULL,
+  badge_key   VARCHAR(64)  NOT NULL COMMENT '徽章标识，对应前端 BADGE_DEFS.id',
+  unlocked_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '解锁时间',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_user_badge (user_id, badge_key),
+  KEY idx_user_id (user_id),
+  CONSTRAINT fk_ub_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户成就徽章';
+
+CREATE TABLE IF NOT EXISTS user_challenges (
+  id            BIGINT        NOT NULL AUTO_INCREMENT,
+  user_id       BIGINT        NOT NULL,
+  challenge_key VARCHAR(32)   NOT NULL COMMENT '挑战标识，对应前端 CHALLENGE_TEMPLATES.id',
+  status        VARCHAR(16)   NOT NULL DEFAULT 'joined' COMMENT 'joined / completed',
+  progress      DECIMAL(10,2) NOT NULL DEFAULT 0     COMMENT '当前进度值',
+  win_count     INT           NOT NULL DEFAULT 0     COMMENT '胜场次数（完成时 +1）',
+  joined_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at  DATETIME               DEFAULT NULL,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_user_challenge (user_id, challenge_key),
+  KEY idx_user_id (user_id),
+  CONSTRAINT fk_uc_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户挑战进度';
+
+
 -- ====================================================================
 -- 表关系速览：
 --   users ──1:N──> trips ──1:N──> trip_day_plans ──1:N──> trip_points
@@ -304,5 +334,6 @@ CREATE TABLE poi_cache (
 --   users ──1:N──> community_posts ──1:N──> post_comments
 --   users ──1:N──> expense_plans ──1:N──> expense_bills
 --   users ──1:N──> favorites  (多态：type+target_id 唯一)
+--   users ──1:N──> user_badges / user_challenges  (user_id + key 唯一)
 --   community_posts.status → pending/approved/rejected
 -- ====================================================================
